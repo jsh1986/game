@@ -2,46 +2,11 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="0; url=./updown-game/" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>업다운 게임</title>
-  <style>
-    body { font-family: sans-serif; display: grid; place-items: center; min-height: 100vh; margin: 0; }
-    .box { text-align: center; padding: 24px; border: 1px solid #ddd; border-radius: 12px; }
-    input, button { padding: 8px 10px; font-size: 16px; }
-    #msg { margin-top: 12px; font-weight: 700; }
-  </style>
+  <title>Redirecting...</title>
 </head>
 <body>
-  <div class="box">
-    <h2>1~20 숫자 맞추기</h2>
-    <p>기회: <span id="left">5</span>번</p>
-    <input id="guess" type="number" min="1" max="20" placeholder="숫자 입력" />
-    <button id="btn">확인</button>
-    <p id="msg">시작!</p>
-  </div>
-
-  <script>
-    const answer = Math.floor(Math.random() * 20) + 1;
-    let left = 5;
-
-    document.getElementById('btn').onclick = () => {
-      const v = Number(document.getElementById('guess').value);
-      const msg = document.getElementById('msg');
-      if (v < 1 || v > 20) return msg.textContent = "1~20 입력!";
-
-      left--;
-      document.getElementById('left').textContent = left;
-
-      if (v === answer) {
-        msg.textContent = "정답!";
-        return;
-      }
-      if (left === 0) {
-        msg.textContent = `게임오버! 정답은 ${answer}`;
-        return;
-      }
-      msg.textContent = v < answer ? "UP" : "DOWN";
-    };
-  </script>
+  <p><a href="./updown-game/">게임으로 이동</a></p>
 </body>
 </html>
