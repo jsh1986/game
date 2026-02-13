@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Word Safari</title>
+  <style>
+    :root {
+      --bg-a: #eef8ff;
+      --bg-b: #fff6ea;
+      --card: #ffffff;
+      --line: #d6e8f6;
+      --text: #24303a;
+      --main: #1f8ccf;
+      --accent: #ff9f45;
+      --ok: #18915f;
+      --bad: #cc4c4c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      display: grid;
+      place-items: center;
+      font-family: "Malgun Gothic", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 10%, #ffffff 0%, var(--bg-a) 45%, var(--bg-b) 100%);
+    }
+
+    .app {
+      width: min(820px, 100%);
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #fff;
+      border-radius: 18px;
+      box-shadow: 0 14px 28px rgba(57, 96, 121, 0.2);
+      padding: 18px;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--main);
+      font-size: clamp(24px, 4.5vw, 34px);
+    }
+
+    .stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 6px 10px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      padding: 16px;
+    }
+
+    .screen { display: none; }
+    .screen.show { display: block; }
+
+    .intro {
+      text-align: center;
+    }
+
+    .intro h2 {
+      margin: 2px 0 10px;
+      font-size: clamp(22px, 4vw, 28px);
+    }
+
+    .intro p {
+      margin: 6px 0;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .word-tags {
+      margin: 10px auto 12px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      max-width: 650px;
+    }
+
+    .tag {
+      border: 1px solid #f2dbc2;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fff8f0;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .primary-btn {
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(120deg, #1f8ccf, #4db3ea);
+      color: #fff;
+      font-weight: 800;
+      font-size: 20px;
+      padding: 14px 18px;
+      cursor: pointer;
+      min-height: 50px;
+    }
+
+    .primary-btn:hover { filter: brightness(1.05); }
+
+    .quiz-head {
+      margin-bottom: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    #typeLabel {
+      color: var(--accent);
+      font-weight: 800;
+      margin: 0;
+      font-size: 18px;
+    }
+
+    #promptText {
+      margin: 0;
+      font-size: clamp(25px, 5.2vw, 46px);
+      font-weight: 900;
+      text-align: center;
+      min-height: 62px;
+    }
+
+    #subText {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(17px, 3.2vw, 24px);
+      color: #4a5d6b;
+      min-height: 30px;
+    }
+
+    .choices {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .choice {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 10px;
+      min-height: 56px;
+      font-size: clamp(20px, 4vw, 30px);
+      font-weight: 800;
+      color: #fff;
+      cursor: pointer;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    .choice:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    .choice:disabled { opacity: 0.65; cursor: default; }
+    .choice.a { background: linear-gradient(130deg, #ff9f45, #ffc46e); }
+    .choice.b { background: linear-gradient(130deg, #1f8ccf, #58b8ef); }
+    .choice.c { background: linear-gradient(130deg, #5f8aef, #7da1ff); }
+
+    .listen {
+      margin: 4px auto 0;
+      display: block;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-height: 46px;
+      font-weight: 800;
+      font-size: 16px;
+      color: #fff;
+      background: #2d7f60;
+      cursor: pointer;
+    }
+
+    #message {
+      margin: 12px 0 0;
+      text-align: center;
+      min-height: 28px;
+      font-size: clamp(18px, 3vw, 24px);
+      font-weight: 800;
+    }
+
+    #message.ok { color: var(--ok); }
+    #message.bad { color: var(--bad); }
+
+    .result {
+      text-align: center;
+    }
+
+    .result h2 {
+      margin: 0 0 8px;
+      font-size: clamp(22px, 4vw, 30px);
+    }
+
+    .result p {
+      margin: 8px 0;
+      font-size: 17px;
+    }
+
+    .review-list {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 6px;
+    }
+
+    .review-list li {
+      border: 1px dashed #e7cdb4;
+      border-radius: 10px;
+      padding: 6px 10px;
+      background: #fff9f2;
+      font-weight: 700;
+    }
+
+    .row-btns {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .secondary-btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-height: 46px;
+      font-weight: 800;
+      color: #fff;
+      background: #2f2f2f;
+      cursor: pointer;
+    }
+
+    @media (max-width: 680px) {
+      .choices { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="top">
+      <h1>English Word Safari</h1>
+      <div class="stats">
+        <span class="pill">Q <span id="progress">0</span>/12</span>
+        <span class="pill">Score <span id="score">0</span></span>
+        <span class="pill">Combo <span id="combo">0</span></span>
+        <span class="pill">Stars <span id="stars">0</span></span>
+      </div>
+    </div>
+
+    <section id="startScreen" class="screen show panel intro">
+      <h2>영어 단어 탐험</h2>
+      <p>6세용 놀이 학습: 그림, 단어, 소리를 함께 연습해요.</p>
+      <p>총 12문제, 같은 단어가 여러 번 나와요.</p>
+      <div class="word-tags">
+        <span class="tag">animals</span>
+        <span class="tag">food</span>
+        <span class="tag">colors</span>
+        <span class="tag">home</span>
+      </div>
+      <button id="startBtn" class="primary-btn" type="button">시작하기</button>
+    </section>
+
+    <section id="quizScreen" class="screen panel">
+      <div class="quiz-head">
+        <p id="typeLabel"></p>
+        <p id="promptText"></p>
+        <p id="subText"></p>
+      </div>
+      <button id="listenBtn" class="listen" type="button">소리 듣기</button>
+      <div class="choices">
+        <button id="choiceA" class="choice a" type="button"></button>
+        <button id="choiceB" class="choice b" type="button"></button>
+        <button id="choiceC" class="choice c" type="button"></button>
+      </div>
+      <p id="message"></p>
+    </section>
+
+    <section id="resultScreen" class="screen panel result">
+      <h2>오늘의 탐험 완료!</h2>
+      <p>점수: <strong id="finalScore">0</strong> / 12</p>
+      <p>별: <strong id="finalStars">0</strong></p>
+      <p id="reviewTitle">복습 단어</p>
+      <ul id="reviewList" class="review-list"></ul>
+      <div class="row-btns">
+        <button id="restartBtn" class="primary-btn" type="button">다시하기</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const words = [
+      { word: "cat", emoji: "🐱", ko: "고양이", category: "animals" },
+      { word: "dog", emoji: "🐶", ko: "강아지", category: "animals" },
+      { word: "bird", emoji: "🐦", ko: "새", category: "animals" },
+      { word: "fish", emoji: "🐟", ko: "물고기", category: "animals" },
+      { word: "rabbit", emoji: "🐰", ko: "토끼", category: "animals" },
+      { word: "duck", emoji: "🦆", ko: "오리", category: "animals" },
+      { word: "apple", emoji: "🍎", ko: "사과", category: "food" },
+      { word: "banana", emoji: "🍌", ko: "바나나", category: "food" },
+      { word: "milk", emoji: "🥛", ko: "우유", category: "food" },
+      { word: "bread", emoji: "🍞", ko: "빵", category: "food" },
+      { word: "red", emoji: "🟥", ko: "빨강", category: "colors" },
+      { word: "blue", emoji: "🟦", ko: "파랑", category: "colors" },
+      { word: "yellow", emoji: "🟨", ko: "노랑", category: "colors" },
+      { word: "green", emoji: "🟩", ko: "초록", category: "colors" },
+      { word: "book", emoji: "📘", ko: "책", category: "home" },
+      { word: "chair", emoji: "🪑", ko: "의자", category: "home" },
+      { word: "bed", emoji: "🛏️", ko: "침대", category: "home" },
+      { word: "door", emoji: "🚪", ko: "문", category: "home" }
+    ];
+
+    const TOTAL_QUESTIONS = 12;
+    const TYPES = ["word_to_emoji", "emoji_to_word", "listen_to_word"];
+
+    const startScreenEl = document.getElementById("startScreen");
+    const quizScreenEl = document.getElementById("quizScreen");
+    const resultScreenEl = document.getElementById("resultScreen");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const progressEl = document.getElementById("progress");
+    const scoreEl = document.getElementById("score");
+    const comboEl = document.getElementById("combo");
+    const starsEl = document.getElementById("stars");
+    const typeLabelEl = document.getElementById("typeLabel");
+    const promptTextEl = document.getElementById("promptText");
+    const subTextEl = document.getElementById("subText");
+    const listenBtn = document.getElementById("listenBtn");
+    const messageEl = document.getElementById("message");
+    const finalScoreEl = document.getElementById("finalScore");
+    const finalStarsEl = document.getElementById("finalStars");
+    const reviewListEl = document.getElementById("reviewList");
+    const reviewTitleEl = document.getElementById("reviewTitle");
+    const choiceButtons = [
+      document.getElementById("choiceA"),
+      document.getElementById("choiceB"),
+      document.getElementById("choiceC")
+    ];
+
+    let questionDeck = [];
+    let questionIndex = 0;
+    let score = 0;
+    let combo = 0;
+    let stars = 0;
+    let currentQuestion = null;
+    let locked = false;
+    let reviewWords = new Set();
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function pickUniqueWords(count) {
+      return shuffle(words).slice(0, count);
+    }
+
+    function pickWrongWords(answerWord, count) {
+      return shuffle(words.filter((w) => w.word !== answerWord.word)).slice(0, count);
+    }
+
+    function showScreen(name) {
+      startScreenEl.classList.remove("show");
+      quizScreenEl.classList.remove("show");
+      resultScreenEl.classList.remove("show");
+      if (name === "start") startScreenEl.classList.add("show");
+      if (name === "quiz") quizScreenEl.classList.add("show");
+      if (name === "result") resultScreenEl.classList.add("show");
+    }
+
+    function setMessage(text, kind) {
+      messageEl.textContent = text;
+      messageEl.className = "";
+      if (kind) messageEl.classList.add(kind);
+    }
+
+    function updateStats() {
+      progressEl.textContent = String(Math.min(questionIndex + 1, TOTAL_QUESTIONS));
+      scoreEl.textContent = String(score);
+      comboEl.textContent = String(combo);
+      starsEl.textContent = String(stars);
+    }
+
+    function canUseSpeech() {
+      return "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance !== "undefined";
+    }
+
+    function speakWord(text) {
+      if (!canUseSpeech()) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "en-US";
+      utter.rate = 0.85;
+      utter.pitch = 1.05;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function makeQuestion(item, type) {
+      const wrongs = pickWrongWords(item, 2);
+      if (type === "word_to_emoji") {
+        return {
+          type,
+          item,
+          typeLabel: "Type A: word -> picture",
+          prompt: item.word,
+          sub: "단어에 맞는 그림을 고르세요",
+          choices: shuffle([
+            { label: item.emoji, value: item.word },
+            { label: wrongs[0].emoji, value: wrongs[0].word },
+            { label: wrongs[1].emoji, value: wrongs[1].word }
+          ]),
+          answer: item.word
+        };
+      }
+      if (type === "emoji_to_word") {
+        return {
+          type,
+          item,
+          typeLabel: "Type B: picture -> word",
+          prompt: item.emoji,
+          sub: item.ko,
+          choices: shuffle([
+            { label: item.word, value: item.word },
+            { label: wrongs[0].word, value: wrongs[0].word },
+            { label: wrongs[1].word, value: wrongs[1].word }
+          ]),
+          answer: item.word
+        };
+      }
+      return {
+        type,
+        item,
+        typeLabel: "Type C: listen -> word",
+        prompt: "🔊",
+        sub: "소리를 듣고 단어를 고르세요",
+        choices: shuffle([
+          { label: item.word, value: item.word },
+          { label: wrongs[0].word, value: wrongs[0].word },
+          { label: wrongs[1].word, value: wrongs[1].word }
+        ]),
+        answer: item.word
+      };
+    }
+
+    function buildDeck() {
+      const focusWords = pickUniqueWords(6);
+      const deck = [];
+
+      focusWords.forEach((item) => {
+        const twoTypes = shuffle(TYPES).slice(0, 2);
+        deck.push(makeQuestion(item, twoTypes[0]));
+        deck.push(makeQuestion(item, twoTypes[1]));
+      });
+
+      return shuffle(deck).slice(0, TOTAL_QUESTIONS);
+    }
+
+    function enableChoices(enabled) {
+      choiceButtons.forEach((btn) => {
+        btn.disabled = !enabled;
+      });
+    }
+
+    function renderQuestion() {
+      currentQuestion = questionDeck[questionIndex];
+      typeLabelEl.textContent = currentQuestion.typeLabel;
+      promptTextEl.textContent = currentQuestion.prompt;
+      subTextEl.textContent = currentQuestion.sub;
+      choiceButtons.forEach((btn, idx) => {
+        btn.textContent = currentQuestion.choices[idx].label;
+      });
+
+      if (currentQuestion.type === "listen_to_word") {
+        listenBtn.style.display = "block";
+      } else {
+        listenBtn.style.display = "none";
+      }
+
+      enableChoices(true);
+      updateStats();
+      setMessage("정답을 골라보세요!");
+    }
+
+    function finishGame() {
+      showScreen("result");
+      finalScoreEl.textContent = String(score);
+      finalStarsEl.textContent = String(stars);
+      reviewListEl.innerHTML = "";
+
+      if (reviewWords.size === 0) {
+        reviewTitleEl.textContent = "복습 단어: 완벽해요!";
+        const li = document.createElement("li");
+        li.textContent = "오늘은 복습할 단어가 없어요.";
+        reviewListEl.appendChild(li);
+        return;
+      }
+
+      reviewTitleEl.textContent = "복습 단어";
+      const reviewItems = words.filter((w) => reviewWords.has(w.word));
+      reviewItems.forEach((w) => {
+        const li = document.createElement("li");
+        li.textContent = w.emoji + " " + w.word + " (" + w.ko + ")";
+        reviewListEl.appendChild(li);
+      });
+    }
+
+    function checkAnswer(selectedValue) {
+      if (locked || !currentQuestion) return;
+      locked = true;
+      const correct = selectedValue === currentQuestion.answer;
+
+      if (correct) {
+        score += 1;
+        combo += 1;
+        if (combo > 0 && combo % 3 === 0) {
+          stars += 1;
+          setMessage("정답! 3연속 성공, 별 1개!", "ok");
+        } else {
+          setMessage("정답! 잘했어요!", "ok");
+        }
+      } else {
+        combo = 0;
+        reviewWords.add(currentQuestion.item.word);
+        setMessage(
+          "아쉬워요. 정답은 " + currentQuestion.item.word + " (" + currentQuestion.item.ko + ")",
+          "bad"
+        );
+      }
+
+      updateStats();
+      enableChoices(false);
+
+      setTimeout(() => {
+        questionIndex += 1;
+        if (questionIndex >= TOTAL_QUESTIONS) {
+          finishGame();
+        } else {
+          renderQuestion();
+        }
+        locked = false;
+      }, 750);
+    }
+
+    function startGame() {
+      questionDeck = buildDeck();
+      questionIndex = 0;
+      score = 0;
+      combo = 0;
+      stars = 0;
+      currentQuestion = null;
+      locked = false;
+      reviewWords = new Set();
+      showScreen("quiz");
+      renderQuestion();
+    }
+
+    choiceButtons.forEach((btn, idx) => {
+      btn.addEventListener("click", () => {
+        checkAnswer(currentQuestion.choices[idx].value);
+      });
+    });
+
+    listenBtn.addEventListener("click", () => {
+      if (!currentQuestion || currentQuestion.type !== "listen_to_word") return;
+      speakWord(currentQuestion.item.word);
+    });
+
+    startBtn.addEventListener("click", startGame);
+    restartBtn.addEventListener("click", startGame);
+
+    if (!canUseSpeech()) {
+      listenBtn.textContent = "브라우저 소리 미지원";
+      listenBtn.disabled = true;
+    }
+
+    updateStats();
+    setMessage("");
+    showScreen("start");
+  </script>
+</body>
+</html>
