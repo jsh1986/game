@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&#45908;&#54616;&#44592; &#48736;&#44592;</title>
+  <style>
+    :root {
+      --bg-a: #fff8ef;
+      --bg-b: #ebf8ff;
+      --card: #ffffff;
+      --line: #f2d7b8;
+      --text: #2b2b2b;
+      --main: #ff8a3d;
+      --sub: #36a5a8;
+      --ok: #1f9b5f;
+      --bad: #db4f4f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      display: grid;
+      place-items: center;
+      font-family: "Malgun Gothic", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 10% 10%, #fffef5 0%, var(--bg-a) 35%, var(--bg-b) 100%);
+    }
+
+    .app {
+      width: min(760px, 100%);
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #fff;
+      border-radius: 20px;
+      box-shadow: 0 12px 28px rgba(61, 97, 117, 0.2);
+      padding: 18px;
+    }
+
+    .top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 34px);
+      color: var(--main);
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .pill {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .board {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    #stage {
+      margin: 0;
+      font-weight: 700;
+      color: var(--sub);
+      font-size: 16px;
+    }
+
+    #questionText {
+      margin: 0;
+      font-size: clamp(28px, 7vw, 52px);
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 1px;
+      min-height: 74px;
+    }
+
+    .visual {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(20px, 4.8vw, 32px);
+      min-height: 40px;
+      color: #6f5f4a;
+      word-break: keep-all;
+    }
+
+    .choices {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .choice {
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 10px;
+      font-size: clamp(24px, 4vw, 34px);
+      font-weight: 800;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .choice:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    .choice:disabled { opacity: 0.65; cursor: default; }
+    .choice.a { background: linear-gradient(130deg, #ff8a3d, #ffb56f); }
+    .choice.b { background: linear-gradient(130deg, #36a5a8, #59c5b8); }
+    .choice.c { background: linear-gradient(130deg, #6c86ff, #88a2ff); }
+
+    #message {
+      margin: 0;
+      text-align: center;
+      font-weight: 700;
+      font-size: clamp(18px, 3.2vw, 24px);
+      min-height: 30px;
+    }
+
+    #message.ok { color: var(--ok); }
+    #message.bad { color: var(--bad); }
+
+    .result {
+      display: none;
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fffdfa;
+    }
+
+    .result.show { display: block; }
+
+    #restart {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      background: #2f2f2f;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    @media (max-width: 620px) {
+      .choices { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="top">
+      <h1>&#45908;&#54616;&#44592; &#48736;&#44592;</h1>
+      <div class="stats">
+        <span class="pill">&#47928;&#51228; <span id="progress">1</span>/10</span>
+        <span class="pill">&#51216;&#49688; <span id="score">0</span></span>
+        <span class="pill">&#53076;&#48372; <span id="combo">0</span></span>
+        <span class="pill">&#48324; <span id="stars">0</span>&#44060;</span>
+      </div>
+    </div>
+
+    <section class="board">
+      <p id="stage"></p>
+      <p id="questionText">2 + 3 = ?</p>
+      <p id="visual" class="visual"></p>
+      <div class="choices">
+        <button id="choiceA" class="choice a" type="button"></button>
+        <button id="choiceB" class="choice b" type="button"></button>
+        <button id="choiceC" class="choice c" type="button"></button>
+      </div>
+      <p id="message"></p>
+      <div id="result" class="result">
+        <h2>&#50756;&#47308;!</h2>
+        <p>&#52572;&#51333; &#51216;&#49688;: <strong id="finalScore">0</strong> / 10</p>
+        <p>&#54913;&#46301; &#48324;: <strong id="finalStars">0</strong>&#44060;</p>
+        <button id="restart" type="button">&#45796;&#49884; &#54616;&#44592;</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const TOTAL_QUESTIONS = 10;
+    const progressEl = document.getElementById("progress");
+    const scoreEl = document.getElementById("score");
+    const comboEl = document.getElementById("combo");
+    const starsEl = document.getElementById("stars");
+    const stageEl = document.getElementById("stage");
+    const questionTextEl = document.getElementById("questionText");
+    const visualEl = document.getElementById("visual");
+    const messageEl = document.getElementById("message");
+    const resultEl = document.getElementById("result");
+    const finalScoreEl = document.getElementById("finalScore");
+    const finalStarsEl = document.getElementById("finalStars");
+    const restartBtn = document.getElementById("restart");
+    const choiceButtons = [
+      document.getElementById("choiceA"),
+      document.getElementById("choiceB"),
+      document.getElementById("choiceC")
+    ];
+
+    let index = 0;
+    let score = 0;
+    let combo = 0;
+    let stars = 0;
+    let current = null;
+    let locked = false;
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function randint(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function stageLabel(i) {
+      if (i < 4) return "\u0031\uB2E8\uACC4: \u0031\u0030\uAE4C\uC9C0 \uC26C\uC6B4 \uACC4\uC0B0";
+      if (i < 8) return "\u0032\uB2E8\uACC4: \u0032\u0030\uAE4C\uC9C0 \uACC4\uC0B0";
+      return "\u0033\uB2E8\uACC4: \uACC4\uC0B0 + \uBE44\uAD50";
+    }
+
+    function dots(n) {
+      return "\u25CF".repeat(Math.max(0, Math.min(n, 20)));
+    }
+
+    function makeAdd(limit) {
+      const a = randint(0, limit);
+      const b = randint(0, limit - a);
+      return {
+        type: "number",
+        text: String(a) + " + " + String(b) + " = ?",
+        visual: dots(a) + " + " + dots(b),
+        answer: a + b
+      };
+    }
+
+    function makeSub(limit) {
+      const a = randint(0, limit);
+      const b = randint(0, a);
+      return {
+        type: "number",
+        text: String(a) + " - " + String(b) + " = ?",
+        visual: dots(a) + " - " + dots(b),
+        answer: a - b
+      };
+    }
+
+    function makeCompare(limit) {
+      const a = randint(0, limit);
+      const b = randint(0, limit);
+      const answer = a > b ? ">" : (a < b ? "<" : "=");
+      return {
+        type: "symbol",
+        text: String(a) + " ? " + String(b),
+        visual: "\uC67C\uCABD \uC218\uC640 \uC624\uB978\uCABD \uC218\uB97C \uBE44\uAD50\uD574\uC694",
+        answer
+      };
+    }
+
+    function uniqueWrongNumbers(answer) {
+      const pool = new Set();
+      while (pool.size < 2) {
+        const delta = randint(1, 3);
+        const sign = Math.random() < 0.5 ? -1 : 1;
+        const candidate = Math.max(0, answer + sign * delta);
+        if (candidate !== answer) pool.add(candidate);
+      }
+      return [...pool];
+    }
+
+    function choicesFor(question) {
+      if (question.type === "symbol") return shuffle([">", "<", "="]);
+      const wrongs = uniqueWrongNumbers(question.answer);
+      return shuffle([question.answer, wrongs[0], wrongs[1]]);
+    }
+
+    function buildQuestion(i) {
+      if (i < 4) return Math.random() < 0.5 ? makeAdd(10) : makeSub(10);
+      if (i < 8) return Math.random() < 0.5 ? makeAdd(20) : makeSub(20);
+      const roll = Math.random();
+      if (roll < 0.4) return makeCompare(20);
+      if (roll < 0.7) return makeAdd(20);
+      return makeSub(20);
+    }
+
+    function setMessage(text, kind) {
+      messageEl.textContent = text;
+      messageEl.className = "";
+      if (kind) messageEl.classList.add(kind);
+    }
+
+    function updateStats() {
+      progressEl.textContent = String(Math.min(index + 1, TOTAL_QUESTIONS));
+      scoreEl.textContent = String(score);
+      comboEl.textContent = String(combo);
+      starsEl.textContent = String(stars);
+    }
+
+    function enableChoices(enabled) {
+      choiceButtons.forEach((btn) => {
+        btn.disabled = !enabled;
+      });
+    }
+
+    function renderQuestion() {
+      current = buildQuestion(index);
+      stageEl.textContent = stageLabel(index);
+      questionTextEl.textContent = current.text;
+      visualEl.textContent = current.visual;
+      const labels = choicesFor(current);
+      choiceButtons.forEach((btn, i) => {
+        btn.textContent = String(labels[i]);
+      });
+      enableChoices(true);
+      updateStats();
+      setMessage("\uC815\uB2F5\uC744 \uACE8\uB77C\uBCF4\uC138\uC694!");
+    }
+
+    function finishGame() {
+      resultEl.classList.add("show");
+      finalScoreEl.textContent = String(score);
+      finalStarsEl.textContent = String(stars);
+      enableChoices(false);
+      setMessage("\uB354\uD558\uAE30 \uBE7C\uAE30 \uB05D! \uB2E4\uC2DC \uD574\uB3C4 \uC88B\uC544\uC694.", "ok");
+      progressEl.textContent = String(TOTAL_QUESTIONS);
+    }
+
+    function onChoice(value) {
+      if (locked || !current) return;
+      locked = true;
+      const correct = String(value) === String(current.answer);
+
+      if (correct) {
+        score += 1;
+        combo += 1;
+        if (combo > 0 && combo % 3 === 0) {
+          stars += 1;
+          setMessage("\uC815\uB2F5! \u0033\uC5F0\uC18D \uC131\uACF5, \uBCC4 \u0031\uAC1C \uD68D\uB4DD!", "ok");
+        } else {
+          setMessage("\uC815\uB2F5! \uC544\uC8FC \uC798\uD588\uC5B4\uC694!", "ok");
+        }
+      } else {
+        combo = 0;
+        setMessage("\uC544\uC26C\uC6CC\uC694. \uC815\uB2F5\uC740 " + String(current.answer) + "\uC785\uB2C8\uB2E4.", "bad");
+      }
+
+      updateStats();
+      enableChoices(false);
+      setTimeout(() => {
+        index += 1;
+        if (index >= TOTAL_QUESTIONS) {
+          finishGame();
+        } else {
+          renderQuestion();
+        }
+        locked = false;
+      }, 700);
+    }
+
+    function startGame() {
+      index = 0;
+      score = 0;
+      combo = 0;
+      stars = 0;
+      current = null;
+      locked = false;
+      resultEl.classList.remove("show");
+      renderQuestion();
+    }
+
+    choiceButtons.forEach((btn) => {
+      btn.addEventListener("click", () => onChoice(btn.textContent));
+    });
+
+    restartBtn.addEventListener("click", startGame);
+    startGame();
+  </script>
+</body>
+</html>
