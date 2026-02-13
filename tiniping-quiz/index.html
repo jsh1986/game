@@ -102,12 +102,20 @@
       border: 0;
       border-radius: 12px;
       padding: 13px 12px;
-      font-size: clamp(24px, 4.2vw, 36px);
+      font-size: clamp(30px, 5vw, 46px);
       font-weight: 700;
       cursor: pointer;
       color: white;
-      background: linear-gradient(120deg, var(--main), var(--sub));
       transition: transform 140ms ease, filter 140ms ease;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+    }
+
+    #choiceA {
+      background: linear-gradient(120deg, #ff4f9d, #ff8457);
+    }
+
+    #choiceB {
+      background: linear-gradient(120deg, #49b3ff, #6f82ff);
     }
 
     .choice:hover { transform: translateY(-2px); filter: brightness(1.04); }
@@ -152,6 +160,31 @@
       animation: shake 330ms ease;
     }
 
+    .effects-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 999;
+    }
+
+    .firework {
+      --dx: 0px;
+      --dy: -100px;
+      --size: 8px;
+      --dur: 850ms;
+      --hue: 0deg;
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: 0;
+      top: 0;
+      border-radius: 50%;
+      background: hsl(var(--hue), 94%, 60%);
+      box-shadow: 0 0 10px hsl(var(--hue), 94%, 60%);
+      animation: firework-burst var(--dur) ease-out forwards;
+    }
+
     @keyframes pop {
       0% { transform: scale(1); }
       45% { transform: scale(1.08); }
@@ -166,17 +199,29 @@
       100% { transform: translateX(0); }
     }
 
+    @keyframes firework-burst {
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--dx), var(--dy)) scale(0.2);
+        opacity: 0;
+      }
+    }
+
     @media (max-width: 640px) {
       .choices { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+  <div id="effectsLayer" class="effects-layer"></div>
   <main class="app">
     <div class="top">
       <h1>티니핑 이름 맞추기</h1>
       <div class="stat">
-        <span class="pill">문제: <span id="progress">1</span> / 10</span>
+        <span class="pill">문제: <span id="progress">1</span> / <span id="totalQuestionsTop">10</span></span>
         <span class="pill">점수: <span id="score">0</span></span>
       </div>
     </div>
@@ -195,7 +240,7 @@
 
       <div id="result" class="result">
         <h2>퀴즈 완료</h2>
-        <p>최종 점수: <strong id="finalScore">0</strong> / 10</p>
+        <p>최종 점수: <strong id="finalScore">0</strong> / <span id="totalQuestionsFinal">10</span></p>
         <button id="restart" type="button">다시 하기</button>
       </div>
     </section>
@@ -203,16 +248,116 @@
 
   <script>
     const characters = [
-      { name: "빨리핑", src: "./assets/images/characters/빨리핑.png" },
-      { name: "얌얌핑", src: "./assets/images/characters/얌얌핑.png" },
-      { name: "뜨거핑", src: "./assets/images/characters/뜨거핑.png" },
-      { name: "삐뽀핑", src: "./assets/images/characters/삐뽀핑.png" },
-      { name: "힘내핑", src: "./assets/images/characters/힘내핑.png" },
+      { name: "가면핑", src: "./assets/images/characters/가면핑.webp" },
+      { name: "간호핑", src: "./assets/images/characters/간호핑.webp" },
       { name: "고쳐핑", src: "./assets/images/characters/고쳐핑.png" },
-      { name: "아라핑", src: "./assets/images/characters/아라핑.png" },
-      { name: "패션핑", src: "./assets/images/characters/패션핑.png" },
+      { name: "공쥬핑", src: "./assets/images/characters/공쥬핑.webp" },
+      { name: "그림핑", src: "./assets/images/characters/그림핑.webp" },
+      { name: "까르핑", src: "./assets/images/characters/까르핑.webp" },
+      { name: "깜빡핑", src: "./assets/images/characters/깜빡핑.webp" },
+      { name: "깡총핑", src: "./assets/images/characters/깡총핑.webp" },
+      { name: "꺼꿀핑", src: "./assets/images/characters/꺼꿀핑.webp" },
       { name: "꼼딱핑", src: "./assets/images/characters/꼼딱핑.png" },
-      { name: "퐁당핑", src: "./assets/images/characters/퐁당핑.png" }
+      { name: "꽁꽁핑", src: "./assets/images/characters/꽁꽁핑.webp" },
+      { name: "꾸래핑", src: "./assets/images/characters/꾸래핑.webp" },
+      { name: "꾸며핑", src: "./assets/images/characters/꾸며핑.webp" },
+      { name: "나나핑", src: "./assets/images/characters/나나핑.webp" },
+      { name: "나르핑", src: "./assets/images/characters/나르핑.webp" },
+      { name: "노라핑", src: "./assets/images/characters/노라핑.webp" },
+      { name: "노리핑", src: "./assets/images/characters/노리핑.webp" },
+      { name: "눈꽃핑", src: "./assets/images/characters/눈꽃핑.webp" },
+      { name: "다롱핑", src: "./assets/images/characters/다롱핑.webp" },
+      { name: "다조핑", src: "./assets/images/characters/다조핑.webp" },
+      { name: "다해핑", src: "./assets/images/characters/다해핑.webp" },
+      { name: "달콤핑", src: "./assets/images/characters/달콤핑.webp" },
+      { name: "덜덜핑", src: "./assets/images/characters/덜덜핑.webp" },
+      { name: "따라핑", src: "./assets/images/characters/따라핑.webp" },
+      { name: "딱풀핑", src: "./assets/images/characters/딱풀핑.webp" },
+      { name: "떠벌핑", src: "./assets/images/characters/떠벌핑.webp" },
+      { name: "또까핑", src: "./assets/images/characters/또까핑.webp" },
+      { name: "또너핑", src: "./assets/images/characters/또너핑.webp" },
+      { name: "똑똑핑", src: "./assets/images/characters/똑똑핑.webp" },
+      { name: "뚝딱핑", src: "./assets/images/characters/뚝딱핑.webp" },
+      { name: "뜨거핑", src: "./assets/images/characters/뜨거핑.png" },
+      { name: "띠용핑", src: "./assets/images/characters/띠용핑.webp" },
+      { name: "라라핑", src: "./assets/images/characters/라라핑.webp" },
+      { name: "롤리핑", src: "./assets/images/characters/롤리핑.webp" },
+      { name: "마카핑", src: "./assets/images/characters/마카핑.webp" },
+      { name: "말랑핑", src: "./assets/images/characters/말랑핑.webp" },
+      { name: "맛나핑", src: "./assets/images/characters/맛나핑.webp" },
+      { name: "머랭핑", src: "./assets/images/characters/머랭핑.webp" },
+      { name: "메모핑", src: "./assets/images/characters/메모핑.webp" },
+      { name: "멜로핑", src: "./assets/images/characters/멜로핑.webp" },
+      { name: "모야핑", src: "./assets/images/characters/모야핑.webp" },
+      { name: "무거핑", src: "./assets/images/characters/무거핑.webp" },
+      { name: "무셔핑", src: "./assets/images/characters/무셔핑.webp" },
+      { name: "믿어핑", src: "./assets/images/characters/믿어핑.webp" },
+      { name: "바네핑", src: "./assets/images/characters/바네핑.webp" },
+      { name: "바로핑", src: "./assets/images/characters/바로핑.webp" },
+      { name: "발레핑", src: "./assets/images/characters/발레핑.webp" },
+      { name: "방글핑", src: "./assets/images/characters/방글핑.webp" },
+      { name: "베베핑", src: "./assets/images/characters/베베핑.webp" },
+      { name: "부끄핑", src: "./assets/images/characters/부끄핑.webp" },
+      { name: "부투핑", src: "./assets/images/characters/부투핑.webp" },
+      { name: "빙글핑", src: "./assets/images/characters/빙글핑.webp" },
+      { name: "빛나핑", src: "./assets/images/characters/빛나핑.webp" },
+      { name: "빤짝핑", src: "./assets/images/characters/빤짝핑.webp" },
+      { name: "빨리핑", src: "./assets/images/characters/빨리핑.png" },
+      { name: "뿌뿌핑", src: "./assets/images/characters/뿌뿌핑.webp" },
+      { name: "삐뽀핑", src: "./assets/images/characters/삐뽀핑.png" },
+      { name: "삐짐핑", src: "./assets/images/characters/삐짐핑.webp" },
+      { name: "새콤핑", src: "./assets/images/characters/새콤핑.webp" },
+      { name: "샌드핑", src: "./assets/images/characters/샌드핑.webp" },
+      { name: "샤샤핑", src: "./assets/images/characters/샤샤핑.webp" },
+      { name: "소원핑", src: "./assets/images/characters/소원핑.webp" },
+      { name: "솔찌핑", src: "./assets/images/characters/솔찌핑.webp" },
+      { name: "시러핑", src: "./assets/images/characters/시러핑.webp" },
+      { name: "싹싹핑", src: "./assets/images/characters/싹싹핑.webp" },
+      { name: "씽씽핑", src: "./assets/images/characters/씽씽핑.webp" },
+      { name: "아라핑", src: "./assets/images/characters/아라핑.png" },
+      { name: "아아핑", src: "./assets/images/characters/아아핑.webp" },
+      { name: "아야핑", src: "./assets/images/characters/아야핑.webp" },
+      { name: "아잉핑", src: "./assets/images/characters/아잉핑.webp" },
+      { name: "아자핑", src: "./assets/images/characters/아자핑.webp" },
+      { name: "아휴핑", src: "./assets/images/characters/아휴핑.webp" },
+      { name: "악동핑", src: "./assets/images/characters/악동핑.webp" },
+      { name: "앙대핑", src: "./assets/images/characters/앙대핑.webp" },
+      { name: "얌얌핑", src: "./assets/images/characters/얌얌핑.png" },
+      { name: "와플핑", src: "./assets/images/characters/와플핑.webp" },
+      { name: "요거핑", src: "./assets/images/characters/요거핑.webp" },
+      { name: "원더핑", src: "./assets/images/characters/원더핑.webp" },
+      { name: "조아핑", src: "./assets/images/characters/조아핑.webp" },
+      { name: "주네핑", src: "./assets/images/characters/주네핑.webp" },
+      { name: "주르핑", src: "./assets/images/characters/주르핑.webp" },
+      { name: "짝짝핑", src: "./assets/images/characters/짝짝핑.webp" },
+      { name: "쪼꼬핑", src: "./assets/images/characters/쪼꼬핑.webp" },
+      { name: "쪼꼼핑", src: "./assets/images/characters/쪼꼼핑.webp" },
+      { name: "찌릿핑", src: "./assets/images/characters/찌릿핑.webp" },
+      { name: "차나핑", src: "./assets/images/characters/차나핑.webp" },
+      { name: "차차핑", src: "./assets/images/characters/차차핑.webp" },
+      { name: "차캐핑", src: "./assets/images/characters/차캐핑.webp" },
+      { name: "초롱핑", src: "./assets/images/characters/초롱핑.webp" },
+      { name: "캔디핑", src: "./assets/images/characters/캔디핑.webp" },
+      { name: "코자핑", src: "./assets/images/characters/코자핑.webp" },
+      { name: "키키핑", src: "./assets/images/characters/키키핑.webp" },
+      { name: "토닥핑", src: "./assets/images/characters/토닥핑.webp" },
+      { name: "토이핑", src: "./assets/images/characters/토이핑.webp" },
+      { name: "투투핑", src: "./assets/images/characters/투투핑.webp" },
+      { name: "트러핑", src: "./assets/images/characters/트러핑.webp" },
+      { name: "파티핑", src: "./assets/images/characters/파티핑.webp" },
+      { name: "패션핑", src: "./assets/images/characters/패션핑.png" },
+      { name: "포근핑", src: "./assets/images/characters/포근핑.webp" },
+      { name: "포실핑", src: "./assets/images/characters/포실핑.webp" },
+      { name: "퐁당핑", src: "./assets/images/characters/퐁당핑.png" },
+      { name: "푸딩핑", src: "./assets/images/characters/푸딩핑.webp" },
+      { name: "플라핑", src: "./assets/images/characters/플라핑.webp" },
+      { name: "하츄핑", src: "./assets/images/characters/하츄핑.webp" },
+      { name: "핫케핑", src: "./assets/images/characters/핫케핑.webp" },
+      { name: "해핑", src: "./assets/images/characters/해핑.webp" },
+      { name: "행운핑", src: "./assets/images/characters/행운핑.webp" },
+      { name: "홀로핑", src: "./assets/images/characters/홀로핑.webp" },
+      { name: "화나핑", src: "./assets/images/characters/화나핑.webp" },
+      { name: "힘내핑", src: "./assets/images/characters/힘내핑.png" }
     ];
 
     const imageEl = document.getElementById("characterImage");
@@ -223,6 +368,9 @@
     const messageEl = document.getElementById("message");
     const resultEl = document.getElementById("result");
     const finalScoreEl = document.getElementById("finalScore");
+    const totalQuestionsTopEl = document.getElementById("totalQuestionsTop");
+    const totalQuestionsFinalEl = document.getElementById("totalQuestionsFinal");
+    const effectsLayerEl = document.getElementById("effectsLayer");
     const restartBtn = document.getElementById("restart");
 
     let order = [];
@@ -260,6 +408,35 @@
       scoreEl.textContent = String(score);
     }
 
+    function launchFireworks() {
+      const bursts = 3;
+      const piecesPerBurst = 20;
+      for (let b = 0; b < bursts; b++) {
+        const originX = Math.random() * window.innerWidth;
+        const originY = window.innerHeight * (0.25 + Math.random() * 0.35);
+        for (let i = 0; i < piecesPerBurst; i++) {
+          const dot = document.createElement("span");
+          dot.className = "firework";
+          const angle = (Math.PI * 2 * i) / piecesPerBurst + (Math.random() * 0.4 - 0.2);
+          const distance = 55 + Math.random() * 130;
+          const dx = Math.cos(angle) * distance;
+          const dy = Math.sin(angle) * distance;
+          const hue = Math.floor(Math.random() * 360);
+          const size = 6 + Math.random() * 6;
+          const duration = 700 + Math.random() * 260;
+          dot.style.left = originX + "px";
+          dot.style.top = originY + "px";
+          dot.style.setProperty("--dx", dx.toFixed(2) + "px");
+          dot.style.setProperty("--dy", dy.toFixed(2) + "px");
+          dot.style.setProperty("--hue", hue + "deg");
+          dot.style.setProperty("--size", size.toFixed(2) + "px");
+          dot.style.setProperty("--dur", duration.toFixed(0) + "ms");
+          effectsLayerEl.appendChild(dot);
+          setTimeout(() => dot.remove(), duration + 80);
+        }
+      }
+    }
+
     function showQuestion() {
       const item = order[currentIndex];
       correctName = item.name;
@@ -290,6 +467,7 @@
         messageEl.textContent = "정답! 정말 잘했어요!";
         imageEl.classList.remove("action-shake");
         imageEl.classList.add("action-pop");
+        launchFireworks();
         setTimeout(() => imageEl.classList.remove("action-pop"), 280);
         scoreEl.textContent = String(score);
         choiceA.disabled = true;
@@ -338,6 +516,8 @@
       currentIndex = 0;
       score = 0;
       locked = false;
+      totalQuestionsTopEl.textContent = String(characters.length);
+      totalQuestionsFinalEl.textContent = String(characters.length);
       resultEl.classList.remove("show");
       showQuestion();
     }
@@ -350,3 +530,4 @@
   </script>
 </body>
 </html>
+
