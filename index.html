@@ -5,50 +5,178 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini Game Hub</title>
   <style>
+    :root {
+      --ink: #1f2a33;
+      --line: #dbe6ef;
+      --panel: #ffffff;
+      --brand: #2b88d8;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
       font-family: "Malgun Gothic", sans-serif;
-      background: linear-gradient(130deg, #f8fbff, #fff4fa);
-      color: #222;
+      background:
+        radial-gradient(circle at 10% 12%, #eef8ff 0%, transparent 40%),
+        radial-gradient(circle at 92% 18%, #fff1db 0%, transparent 34%),
+        linear-gradient(135deg, #f6fbff, #fff6fb);
+      color: var(--ink);
       padding: 24px;
     }
 
     .wrap {
-      width: min(560px, 100%);
-      background: #fff;
-      border: 1px solid #eee;
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+      width: min(1080px, 100%);
+      margin: 0 auto;
     }
 
-    h1 { margin: 0 0 12px; font-size: 24px; }
+    .hero {
+      margin-bottom: 14px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid #fff;
+      border-radius: 16px;
+      box-shadow: 0 12px 24px rgba(50, 80, 108, 0.12);
+      padding: 16px 18px;
+    }
 
-    a {
-      display: block;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      text-decoration: none;
-      color: #222;
-      margin-bottom: 10px;
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4.5vw, 38px);
+      color: var(--brand);
       font-weight: 700;
     }
 
-    a:hover { background: #f7fbff; }
+    .hero p {
+      margin: 6px 0 0;
+      font-size: 15px;
+      color: #4c5a66;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 8px 18px rgba(33, 57, 77, 0.08);
+      transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(33, 57, 77, 0.13);
+      border-color: #b8d4ea;
+    }
+
+    .thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      display: block;
+      background: #eef4fa;
+    }
+
+    .body {
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .desc {
+      margin: 0;
+      font-size: 14px;
+      color: #536371;
+      min-height: 36px;
+    }
+
+    .chip {
+      justify-self: start;
+      border-radius: 999px;
+      background: #ebf5ff;
+      color: #266aa7;
+      border: 1px solid #c9e2f8;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 5px 9px;
+    }
+
+    @media (max-width: 940px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 620px) {
+      body { padding: 16px; }
+      .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <h1>게임 목록</h1>
-    <a href="./updown-game/">업다운 숫자 맞추기</a>
-    <a href="./tiniping-game/">티니핑 매칭 게임</a>
-    <a href="./tiniping-quiz/">티니핑 이름 퀴즈</a>
-    <a href="./plus-minus/">더하기 빼기</a>
-    <a href="./english-word-game/">영어 단어 탐험</a>
+    <section class="hero">
+      <h1>게임 목록</h1>
+      <p>카드를 눌러 바로 시작하세요.</p>
+    </section>
+
+    <section class="grid" aria-label="게임 카드 목록">
+      <a class="card" href="./updown-game/">
+        <img class="thumb" src="./assets/hub/updown.svg" alt="업다운 숫자 맞추기 썸네일" />
+        <div class="body">
+          <p class="title">업다운 숫자 맞추기</p>
+          <p class="desc">숫자를 추리해서 정답을 찾아요.</p>
+          <span class="chip">Number</span>
+        </div>
+      </a>
+
+      <a class="card" href="./memory-game/">
+        <img class="thumb" src="./assets/hub/memory.svg" alt="기억력 게임 썸네일" />
+        <div class="body">
+          <p class="title">기억력 게임</p>
+          <p class="desc">같은 카드를 찾아 기억력을 키워요.</p>
+          <span class="chip">Memory</span>
+        </div>
+      </a>
+
+      <a class="card" href="./tiniping-quiz/">
+        <img class="thumb" src="./tiniping-quiz/assets/images/티니핑10명.png" alt="티니핑 이름 퀴즈 썸네일" />
+        <div class="body">
+          <p class="title">티니핑 이름 퀴즈</p>
+          <p class="desc">캐릭터를 보고 이름을 맞혀요.</p>
+          <span class="chip">Quiz</span>
+        </div>
+      </a>
+
+      <a class="card" href="./plus-minus/">
+        <img class="thumb" src="./assets/hub/plus-minus.svg" alt="더하기 빼기 게임 썸네일" />
+        <div class="body">
+          <p class="title">더하기 빼기</p>
+          <p class="desc">쉬운 연산으로 수 감각을 익혀요.</p>
+          <span class="chip">Math</span>
+        </div>
+      </a>
+
+      <a class="card" href="./english-word-game/">
+        <img class="thumb" src="./assets/hub/english.svg" alt="영어 단어 탐험 썸네일" />
+        <div class="body">
+          <p class="title">영어 단어 탐험</p>
+          <p class="desc">그림과 소리로 단어를 반복 학습해요.</p>
+          <span class="chip">English</span>
+        </div>
+      </a>
+    </section>
   </main>
 </body>
 </html>

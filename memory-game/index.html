@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>티니핑 매칭 게임</title>
+  <title>기억력 게임</title>
   <style>
     :root {
       --bg1: #fff6fb;
@@ -120,7 +120,7 @@
 <body>
   <main class="app">
     <div class="top">
-      <h1>티니핑 매칭 게임</h1>
+      <h1>기억력 게임</h1>
       <div class="stats">
         <span class="pill">시도: <span id="tries">0</span></span>
         <span class="pill">성공: <span id="matches">0</span>/4</span>
@@ -130,7 +130,7 @@
     <section id="grid" class="grid" aria-label="카드 보드"></section>
 
     <div class="controls">
-      <div id="message">같은 티니핑 카드를 찾아보세요.</div>
+      <div id="message">같은 카드를 찾아보세요.</div>
       <button id="restart" type="button">다시 시작</button>
     </div>
   </main>
@@ -169,7 +169,7 @@
       btn.type = "button";
       btn.dataset.symbol = symbol;
       btn.dataset.index = String(index);
-      btn.textContent = "핑";
+      btn.textContent = "카드";
       btn.addEventListener("click", () => flipCard(btn));
       return btn;
     }
@@ -181,11 +181,11 @@
 
     function hide(card) {
       card.classList.add("back");
-      card.textContent = "핑";
+      card.textContent = "카드";
     }
 
     function finishGame() {
-      messageEl.textContent = "완료! 티니핑 친구를 모두 찾았어요.";
+      messageEl.textContent = "완료! 모든 카드를 찾았어요.";
     }
 
     function flipCard(card) {
@@ -233,7 +233,7 @@
       lockBoard = false;
       deck = shuffle([...icons, ...icons]);
       updateStats();
-      messageEl.textContent = "같은 티니핑 카드를 찾아보세요.";
+      messageEl.textContent = "같은 카드를 찾아보세요.";
       render();
     }
 

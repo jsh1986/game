@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-label="Up Down">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#7cd1ff"/>
+      <stop offset="100%" stop-color="#4f7dff"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" rx="28" fill="url(#bg)"/>
+  <circle cx="190" cy="180" r="110" fill="#ffffff22"/>
+  <circle cx="450" cy="180" r="110" fill="#ffffff22"/>
+  <text x="160" y="200" font-family="Segoe UI, Arial, sans-serif" font-size="90" font-weight="800" fill="#fff">UP</text>
+  <text x="370" y="200" font-family="Segoe UI, Arial, sans-serif" font-size="80" font-weight="800" fill="#fff">DOWN</text>
+  <path d="M114 132l36-42 36 42h-26v64h-20v-64h-26z" fill="#fff"/>
+  <path d="M534 228l-36 42-36-42h26v-64h20v64h26z" fill="#fff"/>
+</svg>
