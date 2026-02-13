@@ -1,0 +1,244 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>티니핑 매칭 게임</title>
+  <style>
+    :root {
+      --bg1: #fff6fb;
+      --bg2: #e9f7ff;
+      --card: #ffffff;
+      --line: #ffd5ec;
+      --accent: #ff5ea8;
+      --accent2: #4fb6ff;
+      --text: #333;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Malgun Gothic", sans-serif;
+      color: var(--text);
+      background: linear-gradient(160deg, var(--bg1), var(--bg2));
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: min(780px, 100%);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid #fff;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 10px 24px rgba(102, 132, 180, 0.2);
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      color: var(--accent);
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .pill {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(64px, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      aspect-ratio: 3 / 4;
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 14px;
+      font-size: clamp(28px, 5vw, 40px);
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+
+    .card:hover { transform: translateY(-2px); }
+    .card:disabled { cursor: default; }
+
+    .card.back {
+      background: linear-gradient(140deg, #ffdaef, #d9efff);
+      color: #ffffff;
+      font-size: clamp(20px, 3vw, 28px);
+      font-weight: 700;
+    }
+
+    .controls {
+      margin-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    #message {
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    button#restart {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="top">
+      <h1>티니핑 매칭 게임</h1>
+      <div class="stats">
+        <span class="pill">시도: <span id="tries">0</span></span>
+        <span class="pill">성공: <span id="matches">0</span>/4</span>
+      </div>
+    </div>
+
+    <section id="grid" class="grid" aria-label="카드 보드"></section>
+
+    <div class="controls">
+      <div id="message">같은 티니핑 카드를 찾아보세요.</div>
+      <button id="restart" type="button">다시 시작</button>
+    </div>
+  </main>
+
+  <script>
+    const icons = ["💖", "🌟", "🧁", "🎀"];
+    const grid = document.getElementById("grid");
+    const triesEl = document.getElementById("tries");
+    const matchesEl = document.getElementById("matches");
+    const messageEl = document.getElementById("message");
+    const restartBtn = document.getElementById("restart");
+
+    let deck = [];
+    let openCards = [];
+    let lockBoard = false;
+    let tries = 0;
+    let matches = 0;
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function updateStats() {
+      triesEl.textContent = String(tries);
+      matchesEl.textContent = String(matches);
+    }
+
+    function createCard(symbol, index) {
+      const btn = document.createElement("button");
+      btn.className = "card back";
+      btn.type = "button";
+      btn.dataset.symbol = symbol;
+      btn.dataset.index = String(index);
+      btn.textContent = "핑";
+      btn.addEventListener("click", () => flipCard(btn));
+      return btn;
+    }
+
+    function reveal(card) {
+      card.classList.remove("back");
+      card.textContent = card.dataset.symbol;
+    }
+
+    function hide(card) {
+      card.classList.add("back");
+      card.textContent = "핑";
+    }
+
+    function finishGame() {
+      messageEl.textContent = "완료! 티니핑 친구를 모두 찾았어요.";
+    }
+
+    function flipCard(card) {
+      if (lockBoard || openCards.includes(card) || !card.classList.contains("back")) return;
+
+      reveal(card);
+      openCards.push(card);
+
+      if (openCards.length < 2) return;
+
+      tries += 1;
+      updateStats();
+
+      const [a, b] = openCards;
+      if (a.dataset.symbol === b.dataset.symbol) {
+        a.disabled = true;
+        b.disabled = true;
+        openCards = [];
+        matches += 1;
+        updateStats();
+        messageEl.textContent = "매칭 성공!";
+        if (matches === icons.length) finishGame();
+        return;
+      }
+
+      lockBoard = true;
+      messageEl.textContent = "아쉬워요. 다시 뒤집습니다.";
+      setTimeout(() => {
+        hide(a);
+        hide(b);
+        openCards = [];
+        lockBoard = false;
+      }, 650);
+    }
+
+    function render() {
+      grid.innerHTML = "";
+      deck.forEach((symbol, i) => grid.appendChild(createCard(symbol, i)));
+    }
+
+    function init() {
+      tries = 0;
+      matches = 0;
+      openCards = [];
+      lockBoard = false;
+      deck = shuffle([...icons, ...icons]);
+      updateStats();
+      messageEl.textContent = "같은 티니핑 카드를 찾아보세요.";
+      render();
+    }
+
+    restartBtn.addEventListener("click", init);
+    init();
+  </script>
+</body>
+</html>
