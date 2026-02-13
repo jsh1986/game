@@ -102,12 +102,15 @@
       border: 0;
       border-radius: 12px;
       padding: 13px 12px;
-      font-size: 18px;
+      font-size: clamp(24px, 4.2vw, 36px);
       font-weight: 700;
       cursor: pointer;
       color: white;
       background: linear-gradient(120deg, var(--main), var(--sub));
+      transition: transform 140ms ease, filter 140ms ease;
     }
+
+    .choice:hover { transform: translateY(-2px); filter: brightness(1.04); }
 
     .choice:disabled {
       opacity: 0.65;
@@ -119,6 +122,7 @@
       text-align: center;
       font-weight: 700;
       color: var(--sub);
+      font-size: clamp(18px, 2.4vw, 26px);
     }
 
     .result {
@@ -138,6 +142,28 @@
       padding: 10px 12px;
       font-weight: 700;
       cursor: pointer;
+    }
+
+    .action-pop {
+      animation: pop 260ms ease;
+    }
+
+    .action-shake {
+      animation: shake 330ms ease;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      50% { transform: translateX(8px); }
+      75% { transform: translateX(-6px); }
+      100% { transform: translateX(0); }
     }
 
     @media (max-width: 640px) {
@@ -204,6 +230,7 @@
     let score = 0;
     let correctName = "";
     let locked = false;
+    let wrongAttempts = 0;
 
     function shuffle(arr) {
       const copy = [...arr];
@@ -236,6 +263,7 @@
     function showQuestion() {
       const item = order[currentIndex];
       correctName = item.name;
+      wrongAttempts = 0;
       imageEl.src = item.src;
       imageEl.alt = item.name + " 이미지";
       const wrong = getWrongName(correctName);
@@ -259,15 +287,41 @@
 
       if (name === correctName) {
         score += 1;
-        messageEl.textContent = "정답!";
-      } else {
-        messageEl.textContent = "오답! 정답은 " + correctName;
+        messageEl.textContent = "정답! 정말 잘했어요!";
+        imageEl.classList.remove("action-shake");
+        imageEl.classList.add("action-pop");
+        setTimeout(() => imageEl.classList.remove("action-pop"), 280);
+        scoreEl.textContent = String(score);
+        choiceA.disabled = true;
+        choiceB.disabled = true;
+        setTimeout(() => {
+          currentIndex += 1;
+          if (currentIndex >= characters.length) {
+            finishGame();
+          } else {
+            showQuestion();
+          }
+          locked = false;
+        }, 650);
+        return;
       }
 
-      scoreEl.textContent = String(score);
+      wrongAttempts += 1;
+      imageEl.classList.remove("action-pop");
+      imageEl.classList.add("action-shake");
+      setTimeout(() => imageEl.classList.remove("action-shake"), 340);
+
+      if (wrongAttempts < 2) {
+        messageEl.textContent = "다시 맞춰보세요! (오답 1/2)";
+        setTimeout(() => {
+          locked = false;
+        }, 220);
+        return;
+      }
+
+      messageEl.textContent = "틀렸어요! 정답은 " + correctName;
       choiceA.disabled = true;
       choiceB.disabled = true;
-
       setTimeout(() => {
         currentIndex += 1;
         if (currentIndex >= characters.length) {
@@ -276,7 +330,7 @@
           showQuestion();
         }
         locked = false;
-      }, 650);
+      }, 700);
     }
 
     function startGame() {
