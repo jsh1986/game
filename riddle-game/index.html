@@ -160,7 +160,7 @@
     <div class="top">
       <h1>수수께끼 게임</h1>
       <div class="stats">
-        <span class="pill">문제 <span id="progress">1</span>/<span id="total">145</span></span>
+        <span class="pill">문제 <span id="progress">1</span>/<span id="total">149</span></span>
         <span class="pill">정답 보기 <span id="seen">0</span>개</span>
       </div>
     </div>
@@ -174,7 +174,7 @@
         <button id="answerBtn" type="button">정답 보기</button>
         <button id="nextBtn" type="button">다음 문제</button>
       </div>
-      <p class="sources">???? ???? ??? 145?????.</p>
+      <p class="sources">???? ???? ??? 149?????.</p>
     </section>
   </main>
 
@@ -325,6 +325,10 @@
       { q: "세상에서 가장 아름다운 개는", a: "(정답 : 무지개", h: "?? ??? ? ?????." },
       { q: "온몸이 하얀 사람은", a: "(정답 : 눈사람", h: "?? ??? ? ?????." },
       { q: "실없는 사람에게는 필요 없는 것은", a: "(정답 : 바늘", h: "?? ??? ? ?????." },
+      { q: "물고기 중에 가장 똑똑한 물고기는", a: "(물고기 중에 가장 학벌이 좋은 물고기는", h: "?? ??? ? ?????." },
+      { q: "권투를 가장 잘하는 나라는", a: "(싸움을 가장 좋아하는 나라는", h: "?? ??? ? ?????." },
+      { q: "묵은 묵인데 먹지 못하는 묵은", a: "(묵 중에 가장 조용한 묵은", h: "?? ??? ? ?????." },
+      { q: "문은 문인데 닫지 못하는 문은", a: "(문인데 잘 전달 되는 문은", h: "?? ??? ? ?????." },
     ];
 
     const questionEl = document.getElementById("question");
@@ -453,12 +457,6 @@
     function showHint() {
       const item = currentRiddle();
       const chosungHint = getChoseong(item.a);
-      hintStep += 1;
-
-      if (hintStep === 1) {
-        hintEl.textContent = `추가 힌트: ${item.h}`;
-        return;
-      }
       hintEl.textContent = `초성 힌트: ${chosungHint}`;
     }
 
