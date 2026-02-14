@@ -374,6 +374,10 @@
         .trim();
     }
 
+    function normalizeHintAnswer(answer) {
+      return sanitizeAnswer(answer).replace(/[\s,./!?:;'"()\[\]{}<>~`·ㆍ\-_=+*^$#@%&|\\]/gu, "");
+    }
+
     const normalizedRiddles = riddles.map((item) => ({
       q: String(item.q || "").trim(),
       a: sanitizeAnswer(item.a || ""),
@@ -557,9 +561,10 @@
 
     function renderQuestion() {
       const item = currentRiddle();
+      const hintAnswer = normalizeHintAnswer(item.a);
       clearAutoNextCountdown();
       questionEl.textContent = item.q;
-      hintEl.textContent = `글자수 힌트: ${maskByLength(item.a)}`;
+      hintEl.textContent = `글자수 힌트: ${maskByLength(hintAnswer)}`;
       answerEl.textContent = "";
       hintBtn.hidden = false;
       answerBtn.hidden = false;
@@ -572,7 +577,7 @@
 
     function showHint() {
       const item = currentRiddle();
-      const chosungHint = getChoseong(item.a);
+      const chosungHint = getChoseong(normalizeHintAnswer(item.a));
       hintEl.textContent = `초성 힌트: ${chosungHint}`;
     }
 

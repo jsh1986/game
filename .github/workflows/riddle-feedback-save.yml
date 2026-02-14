@@ -1,0 +1,86 @@
+name: Save Riddle Feedback
+
+on:
+  repository_dispatch:
+    types: [riddle_feedback]
+
+permissions:
+  contents: write
+
+jobs:
+  save:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update data/riddle-feedback.json
+        env:
+          PAYLOAD: ${{ toJson(github.event.client_payload) }}
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const path = "data/riddle-feedback.json";
+
+          const payload = JSON.parse(process.env.PAYLOAD || "{}");
+          const vote = payload.vote;
+          const riddleId = String(payload.riddleId || "").trim();
+          const question = String(payload.question || "").trim();
+          const answer = String(payload.answer || "").trim();
+          const createdAt = String(payload.createdAt || new Date().toISOString());
+
+          if (!riddleId || !question || !answer) {
+            console.log("Missing payload fields. Skip.");
+            process.exit(0);
+          }
+          if (vote !== "like" && vote !== "dislike") {
+            console.log("Invalid vote. Skip.");
+            process.exit(0);
+          }
+
+          let data;
+          if (fs.existsSync(path)) {
+            data = JSON.parse(fs.readFileSync(path, "utf8"));
+          } else {
+            data = { updatedAt: null, items: {} };
+          }
+
+          if (!data.items || typeof data.items !== "object") {
+            data.items = {};
+          }
+
+          if (!data.items[riddleId]) {
+            data.items[riddleId] = {
+              question,
+              answer,
+              like: 0,
+              dislike: 0,
+              lastVoteAt: null
+            };
+          }
+
+          const target = data.items[riddleId];
+          target.question = question;
+          target.answer = answer;
+          target.like = Number(target.like || 0);
+          target.dislike = Number(target.dislike || 0);
+          target[vote] += 1;
+          target.lastVoteAt = createdAt;
+
+          data.updatedAt = new Date().toISOString();
+
+          fs.mkdirSync("data", { recursive: true });
+          fs.writeFileSync(path, JSON.stringify(data, null, 2) + "\n");
+          NODE
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- data/riddle-feedback.json; then
+            echo "No feedback update to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/riddle-feedback.json
+          git commit -m "chore(feedback): update riddle feedback counts"
+          git push
