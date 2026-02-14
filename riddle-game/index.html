@@ -85,7 +85,7 @@
     #answer {
       color: #167d49;
       min-height: 40px;
-      font-size: clamp(20px, 3.4vw, 26px);
+      font-size: clamp(22px, 3.8vw, 28px);
     }
     .actions {
       display: grid;
@@ -107,6 +107,31 @@
       background: linear-gradient(135deg, #6a81ff, #90a4ff);
       grid-column: 1 / -1;
     }
+
+    .effects-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 999;
+    }
+
+    .firework {
+      --dx: 0px;
+      --dy: -100px;
+      --size: 7px;
+      --dur: 850ms;
+      --hue: 0deg;
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: 0;
+      top: 0;
+      border-radius: 50%;
+      background: hsl(var(--hue), 95%, 58%);
+      box-shadow: 0 0 10px hsl(var(--hue), 95%, 58%);
+      animation: firework-burst var(--dur) ease-out forwards;
+    }
     .sources {
       margin: 6px 0 0;
       font-size: 12px;
@@ -116,9 +141,21 @@
     @media (max-width: 640px) {
       .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
+
+    @keyframes firework-burst {
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--dx), var(--dy)) scale(0.2);
+        opacity: 0;
+      }
+    }
   </style>
 </head>
 <body>
+  <div id="effectsLayer" class="effects-layer"></div>
   <main class="app">
     <div class="top">
       <h1>수수께끼 게임</h1>
@@ -157,7 +194,7 @@
       { q: "우산이 노래하면?", a: "우산송", h: "song을 붙여요." },
       { q: "지우개가 뛰면?", a: "지우개개", h: "마지막 소리가 한 번 더." },
       { q: "비행기가 간식을 먹으면?", a: "에어냠냠", h: "air + 냠냠." },
-      { q: "별이 잠오면?", a: "별쿨쿨", h: "잠잘 때 나는 소리." },
+      { q: "별이 잠 오면?", a: "별쿨쿨", h: "잠잘 때 나는 소리." },
       { q: "컵이 놀라면?", a: "컵짝", h: "깜짝의 뒷부분 느낌." },
       { q: "고양이가 수업 들으면?", a: "냥학생", h: "고양이 울음소리를 붙여요." },
       { q: "햄버거가 화나면?", a: "불버거", h: "화나면 불이 붙어요." },
@@ -180,27 +217,39 @@
     const placeWords = ["학교", "바다", "우주", "놀이터", "도서관", "공원"];
     const suffixWords = ["댄스", "송", "슝", "짠", "팡", "스타", "요정"];
 
+    function hasBatchim(word) {
+      const last = Array.from(word).pop();
+      if (!last) return false;
+      const code = last.charCodeAt(0);
+      if (code < 0xac00 || code > 0xd7a3) return false;
+      return (code - 0xac00) % 28 !== 0;
+    }
+
+    function withSubjectJosa(word) {
+      return `${word}${hasBatchim(word) ? "이" : "가"}`;
+    }
+
     const templates = [
-      { q: (t) => `${t}가 웃으면?`, a: (t) => `${t}${moodWords[0]}`, h: "웃을 때 나는 소리를 붙여요." },
-      { q: (t) => `${t}가 배고프면?`, a: (t) => `${t}${moodWords[1]}`, h: "먹는 소리를 떠올려요." },
-      { q: (t) => `${t}가 졸리면?`, a: (t) => `${t}${moodWords[2]}`, h: "잠잘 때 나는 소리." },
-      { q: (t) => `${t}가 하늘로 떠오르면?`, a: (t) => `${t}${moodWords[3]}`, h: "둥둥 뜨는 느낌 단어." },
-      { q: (t) => `${t}가 빛나면?`, a: (t) => `${t}${moodWords[4]}`, h: "빛나는 소리 표현." },
-      { q: (t) => `${t}가 마술을 배우면?`, a: (t) => `${t}${moodWords[5]}`, h: "마술 소리 단어." },
-      { q: (t) => `${t}가 심장이 두근거리면?`, a: (t) => `${t}${moodWords[6]}`, h: "긴장될 때 나는 느낌." },
-      { q: (t) => `${t}가 점프하면?`, a: (t) => `${t}${moodWords[7]}`, h: "점프 소리 표현." },
-      { q: (t) => `${t}가 노래하면?`, a: (t) => `${t}${suffixWords[1]}`, h: "song을 한국식으로." },
-      { q: (t) => `${t}가 춤추면?`, a: (t) => `${t}${suffixWords[0]}`, h: "dance 단어를 떠올려요." },
-      { q: (t) => `${t}가 엄청 빠르면?`, a: (t) => `${t}${suffixWords[2]}`, h: "빠르게 지나가는 소리." },
-      { q: (t) => `${t}가 파티에 가면?`, a: (t) => `${t}${suffixWords[3]}`, h: "파티에서 외치는 말." },
-      { q: (t) => `${t}가 깜짝 놀라면?`, a: (t) => `${t}${suffixWords[4]}`, h: "팡 터지는 느낌." },
-      { q: (t) => `${t}가 TV에 나오면?`, a: (t) => `${t}${suffixWords[5]}`, h: "스타가 돼요." },
-      { q: (t) => `${t}가 숲에 살면?`, a: (t) => `${t}${suffixWords[6]}`, h: "동화 속 존재." },
-      { q: (t) => `${t}가 학교에 가면?`, a: (t) => `${t}학생`, h: "학생이 돼요." },
-      { q: (t) => `${t}가 요리하면?`, a: (t) => `${t}요리사`, h: "직업 이름을 붙여요." },
-      { q: (t) => `${t}가 그림 그리면?`, a: (t) => `${t}화가`, h: "그림 그리는 사람." },
-      { q: (t) => `${t}가 여행 가면?`, a: (t) => `${t}여행단`, h: "여행하는 팀 이름." },
-      { q: (t) => `${t}가 ${placeWords[2]}에 가면?`, a: (t) => `${t}우주대장`, h: "우주의 리더 느낌." }
+      { q: (t) => `${withSubjectJosa(t)} 웃으면?`, a: (t) => `${t}${moodWords[0]}`, h: "웃을 때 나는 소리를 붙여요." },
+      { q: (t) => `${withSubjectJosa(t)} 배고프면?`, a: (t) => `${t}${moodWords[1]}`, h: "먹는 소리를 떠올려요." },
+      { q: (t) => `${withSubjectJosa(t)} 졸리면?`, a: (t) => `${t}${moodWords[2]}`, h: "잠잘 때 나는 소리." },
+      { q: (t) => `${withSubjectJosa(t)} 하늘로 떠오르면?`, a: (t) => `${t}${moodWords[3]}`, h: "둥둥 뜨는 느낌 단어." },
+      { q: (t) => `${withSubjectJosa(t)} 빛나면?`, a: (t) => `${t}${moodWords[4]}`, h: "빛나는 소리 표현." },
+      { q: (t) => `${withSubjectJosa(t)} 마술을 배우면?`, a: (t) => `${t}${moodWords[5]}`, h: "마술 소리 단어." },
+      { q: (t) => `${withSubjectJosa(t)} 심장이 두근거리면?`, a: (t) => `${t}${moodWords[6]}`, h: "긴장될 때 나는 느낌." },
+      { q: (t) => `${withSubjectJosa(t)} 점프하면?`, a: (t) => `${t}${moodWords[7]}`, h: "점프 소리 표현." },
+      { q: (t) => `${withSubjectJosa(t)} 노래하면?`, a: (t) => `${t}${suffixWords[1]}`, h: "song을 한국식으로." },
+      { q: (t) => `${withSubjectJosa(t)} 춤추면?`, a: (t) => `${t}${suffixWords[0]}`, h: "dance 단어를 떠올려요." },
+      { q: (t) => `${withSubjectJosa(t)} 엄청 빠르면?`, a: (t) => `${t}${suffixWords[2]}`, h: "빠르게 지나가는 소리." },
+      { q: (t) => `${withSubjectJosa(t)} 파티에 가면?`, a: (t) => `${t}${suffixWords[3]}`, h: "파티에서 외치는 말." },
+      { q: (t) => `${withSubjectJosa(t)} 깜짝 놀라면?`, a: (t) => `${t}${suffixWords[4]}`, h: "팡 터지는 느낌." },
+      { q: (t) => `${withSubjectJosa(t)} TV에 나오면?`, a: (t) => `${t}${suffixWords[5]}`, h: "스타가 돼요." },
+      { q: (t) => `${withSubjectJosa(t)} 숲에 살면?`, a: (t) => `${t}${suffixWords[6]}`, h: "동화 속 존재." },
+      { q: (t) => `${withSubjectJosa(t)} 학교에 가면?`, a: (t) => `${t}학생`, h: "학생이 돼요." },
+      { q: (t) => `${withSubjectJosa(t)} 요리하면?`, a: (t) => `${t}요리사`, h: "직업 이름을 붙여요." },
+      { q: (t) => `${withSubjectJosa(t)} 그림 그리면?`, a: (t) => `${t}화가`, h: "그림 그리는 사람." },
+      { q: (t) => `${withSubjectJosa(t)} 여행 가면?`, a: (t) => `${t}여행단`, h: "여행하는 팀 이름." },
+      { q: (t) => `${withSubjectJosa(t)} ${placeWords[2]}에 가면?`, a: (t) => `${t}우주대장`, h: "우주의 리더 느낌." }
     ];
 
     function buildOriginalRiddles(targetCount) {
@@ -234,7 +283,7 @@
         const t = things[idx % things.length];
         const p = placeWords[idx % placeWords.length];
         pushUnique({
-          q: `보너스 ${idx}: ${t}가 ${p}에서 소풍 가면?`,
+          q: `보너스 ${idx}: ${withSubjectJosa(t)} ${p}에서 소풍 가면?`,
           a: `${t}${p}소풍단`,
           h: "문제에 나온 두 단어를 이어보세요."
         });
@@ -254,6 +303,7 @@
     const hintBtn = document.getElementById("hintBtn");
     const answerBtn = document.getElementById("answerBtn");
     const nextBtn = document.getElementById("nextBtn");
+    const effectsLayerEl = document.getElementById("effectsLayer");
 
     let order = [];
     let index = 0;
@@ -293,6 +343,35 @@
     function updateStats() {
       progressEl.textContent = String(index + 1);
       seenEl.textContent = String(answerSeen);
+    }
+
+    function launchAnswerFireworks() {
+      const bursts = 2;
+      const piecesPerBurst = 16;
+      for (let b = 0; b < bursts; b += 1) {
+        const originX = window.innerWidth * (0.28 + Math.random() * 0.44);
+        const originY = window.innerHeight * (0.25 + Math.random() * 0.35);
+        for (let i = 0; i < piecesPerBurst; i += 1) {
+          const dot = document.createElement("span");
+          dot.className = "firework";
+          const angle = (Math.PI * 2 * i) / piecesPerBurst + (Math.random() * 0.4 - 0.2);
+          const distance = 48 + Math.random() * 120;
+          const dx = Math.cos(angle) * distance;
+          const dy = Math.sin(angle) * distance;
+          const hue = Math.floor(Math.random() * 360);
+          const size = 5 + Math.random() * 5;
+          const duration = 700 + Math.random() * 260;
+          dot.style.left = `${originX}px`;
+          dot.style.top = `${originY}px`;
+          dot.style.setProperty("--dx", `${dx.toFixed(2)}px`);
+          dot.style.setProperty("--dy", `${dy.toFixed(2)}px`);
+          dot.style.setProperty("--hue", `${hue}deg`);
+          dot.style.setProperty("--size", `${size.toFixed(2)}px`);
+          dot.style.setProperty("--dur", `${duration.toFixed(0)}ms`);
+          effectsLayerEl.appendChild(dot);
+          setTimeout(() => dot.remove(), duration + 80);
+        }
+      }
     }
 
     function clearAutoNextCountdown() {
@@ -354,6 +433,7 @@
       if (!answerOpened) {
         answerSeen += 1;
         answerOpened = true;
+        launchAnswerFireworks();
         hintBtn.hidden = true;
         answerBtn.hidden = true;
         nextBtn.hidden = false;
