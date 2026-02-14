@@ -141,6 +141,36 @@
 
     .result.show { display: block; }
 
+    .result-emotion {
+      margin: 12px auto 0;
+      width: min(260px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      padding: 10px;
+      display: none;
+      gap: 8px;
+      justify-items: center;
+    }
+
+    .result-emotion.show { display: grid; }
+
+    .result-emotion img {
+      width: 100%;
+      max-width: 210px;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      display: block;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .result-emotion p {
+      margin: 0;
+      font-weight: 800;
+      color: #44505b;
+    }
+
     #restart {
       margin-top: 10px;
       border: 0;
@@ -247,6 +277,10 @@
         <h2>퀴즈 완료</h2>
         <p>최종 점수: <strong id="finalScore">0</strong> / <span id="totalQuestionsFinal">10</span></p>
         <p>걸린 시간: <strong id="finalTime">00:00.0</strong></p>
+        <div id="resultEmotion" class="result-emotion">
+          <img id="resultEmotionImage" alt="결과 감정 이미지" />
+          <p id="resultEmotionText"></p>
+        </div>
         <button id="restart" type="button">다시 하기</button>
       </div>
     </section>
@@ -374,6 +408,9 @@
     const messageEl = document.getElementById("message");
     const resultEl = document.getElementById("result");
     const finalScoreEl = document.getElementById("finalScore");
+    const resultEmotionEl = document.getElementById("resultEmotion");
+    const resultEmotionImageEl = document.getElementById("resultEmotionImage");
+    const resultEmotionTextEl = document.getElementById("resultEmotionText");
     const totalQuestionsTopEl = document.getElementById("totalQuestionsTop");
     const totalQuestionsFinalEl = document.getElementById("totalQuestionsFinal");
     const effectsLayerEl = document.getElementById("effectsLayer");
@@ -490,6 +527,39 @@
       }
     }
 
+    function getEmotionKeyByScore(value, maxScore) {
+      const ratio = maxScore > 0 ? value / maxScore : 0;
+      if (ratio === 1) return "yay";
+      if (ratio >= 0.9) return "love_it";
+      if (ratio >= 0.8) return "wink";
+      if (ratio >= 0.7) return "lol";
+      if (ratio >= 0.6) return "omg";
+      if (ratio >= 0.5) return "hmm";
+      if (ratio >= 0.4) return "tired";
+      if (ratio >= 0.2) return "seriously";
+      return "nooo";
+    }
+
+    function emotionTitle(key) {
+      return key.toUpperCase();
+    }
+
+    function showResultEmotion() {
+      const avatar = Math.random() < 0.5 ? "hani" : "jeni";
+      const emotionKey = getEmotionKeyByScore(score, order.length);
+      const src = `../assets/images/${avatar}/${emotionKey}.png`;
+
+      resultEmotionEl.classList.remove("show");
+      resultEmotionImageEl.onerror = () => {
+        resultEmotionEl.classList.remove("show");
+      };
+      resultEmotionImageEl.onload = () => {
+        resultEmotionTextEl.textContent = `${avatar.toUpperCase()} - ${emotionTitle(emotionKey)}`;
+        resultEmotionEl.classList.add("show");
+      };
+      resultEmotionImageEl.src = src;
+    }
+
     function showQuestion() {
       const item = order[currentIndex];
       correctName = item.name;
@@ -506,6 +576,7 @@
       stopTimer();
       finalScoreEl.textContent = String(score);
       finalTimeEl.textContent = formatTime(elapsedMs);
+      showResultEmotion();
       resultEl.classList.add("show");
       choiceA.disabled = true;
       choiceB.disabled = true;
@@ -574,6 +645,9 @@
       totalQuestionsTopEl.textContent = String(order.length);
       totalQuestionsFinalEl.textContent = String(order.length);
       resultEl.classList.remove("show");
+      resultEmotionEl.classList.remove("show");
+      resultEmotionImageEl.removeAttribute("src");
+      resultEmotionTextEl.textContent = "";
       resetTimer();
       startTimer();
       showQuestion();
