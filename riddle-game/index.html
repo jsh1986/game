@@ -1,0 +1,361 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>수수께끼 게임</title>
+  <style>
+    :root {
+      --bg1: #fff8e8;
+      --bg2: #e9f7ff;
+      --card: #ffffff;
+      --line: #f2d6ad;
+      --main: #ff8a3d;
+      --text: #2d2d2d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      font-family: "Malgun Gothic", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 8% 12%, #fffef6, var(--bg1) 36%, var(--bg2) 100%);
+    }
+    .app {
+      width: min(860px, 100%);
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #fff;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 12px 28px rgba(59, 90, 112, 0.18);
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      margin: 0;
+      color: var(--main);
+      font-size: clamp(24px, 4.2vw, 34px);
+    }
+    .stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fff;
+    }
+    .board {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    #question {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(24px, 5vw, 38px);
+      font-weight: 800;
+      min-height: 56px;
+      word-break: keep-all;
+    }
+    #hint, #answer {
+      margin: 0;
+      text-align: center;
+      min-height: 34px;
+      font-size: clamp(17px, 3vw, 22px);
+      font-weight: 700;
+      color: #4b5d69;
+    }
+    #answer {
+      color: #167d49;
+      min-height: 40px;
+    }
+    .actions {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 10px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      cursor: pointer;
+    }
+    #hintBtn { background: linear-gradient(135deg, #40b5c7, #5ed4b6); }
+    #answerBtn { background: linear-gradient(135deg, #ff8a3d, #ffb56f); }
+    #nextBtn { background: linear-gradient(135deg, #6a81ff, #90a4ff); }
+    .sources {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: #65717a;
+      text-align: center;
+    }
+    @media (max-width: 640px) {
+      .actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="top">
+      <h1>수수께끼 게임</h1>
+      <div class="stats">
+        <span class="pill">문제 <span id="progress">1</span>/<span id="total">100</span></span>
+        <span class="pill">정답 보기 <span id="seen">0</span>개</span>
+      </div>
+    </div>
+
+    <section class="board">
+      <p id="question"></p>
+      <p id="hint">힌트 보기 버튼을 눌러보세요.</p>
+      <p id="answer"></p>
+      <div class="actions">
+        <button id="hintBtn" type="button">힌트 보기</button>
+        <button id="answerBtn" type="button">정답 보기</button>
+        <button id="nextBtn" type="button">다음 문제</button>
+      </div>
+      <p class="sources">넌센스/말장난 중심으로 재구성한 100문제입니다.</p>
+    </section>
+  </main>
+
+  <script>
+    const riddles = [
+      { q: "바나나가 웃으면?", a: "바나나킥", h: "과자 이름처럼 들려요." },
+      { q: "소가 계단을 오르면?", a: "소오름", h: "소 + 오름." },
+      { q: "왕이 넘어지면?", a: "킹콩", h: "king 소리로 시작해요." },
+      { q: "오리가 얼면?", a: "언덕", h: "오리 발음이 숨어 있어요." },
+      { q: "오리가 옷 입으면?", a: "후드덕", h: "옷 이름이 힌트예요." },
+      { q: "칼이 정색하면?", a: "검정색", h: "칼을 다른 말로?" },
+      { q: "세상에서 가장 큰 감은?", a: "대감", h: "옛날 벼슬 이름." },
+      { q: "노루 다섯 마리는?", a: "노루오줌", h: "음료 이름처럼 들려요." },
+      { q: "물고기의 반대말은?", a: "불고기", h: "맛있는 고기." },
+      { q: "왕이 궁에 가기 싫으면?", a: "궁시렁궁시렁", h: "투덜투덜." },
+      { q: "비가 한 시간 오면?", a: "추적육십분", h: "유명한 프로그램 이름." },
+      { q: "자동차가 놀라면?", a: "카놀라유", h: "식용유 이름." },
+      { q: "신발이 화나면?", a: "신발끈", h: "묶는 끈." },
+      { q: "추장보다 높은 것은?", a: "고추장", h: "장 이름." },
+      { q: "세상에서 가장 긴 음식은?", a: "참기름", h: "길다 소리로 바꿔봐요." },
+      { q: "세상에서 가장 뜨거운 바다는?", a: "열받아", h: "화났을 때 말." },
+      { q: "세상에서 가장 차가운 바다는?", a: "썰렁해", h: "분위기가 추워요." },
+      { q: "TV를 꺼도 나오는 것은?", a: "아침", h: "매일 와요." },
+      { q: "파리가 요리되면?", a: "프라이", h: "튀김 요리." },
+      { q: "소가 웃으면?", a: "우하하", h: "소 울음 + 웃음." },
+      { q: "소가 죽으면?", a: "다이소", h: "die + 소." },
+      { q: "세상에서 가장 가난한 왕은?", a: "최저임금", h: "돈이 적어요." },
+      { q: "세상에서 가장 지루한 학교는?", a: "로딩스쿨", h: "로딩중이 오래 걸려요." },
+      { q: "미소의 반대말은?", a: "당기소", h: "밀고 당기고." },
+      { q: "해와 달이 싸우면?", a: "해달", h: "동물 이름." },
+      { q: "가장 뜨거운 과일은?", a: "천도복숭아", h: "복숭아 종류." },
+      { q: "소금의 유통기한은?", a: "천일염", h: "천 일 + 소금." },
+      { q: "항상 속는 과일은?", a: "배", h: "타는 것도 배." },
+      { q: "문은 문인데 못 여는 문은?", a: "소문", h: "입에서 입으로." },
+      { q: "차는 차인데 못 마시는 차는?", a: "기차", h: "레일 위를 달려요." },
+      { q: "인도의 수도는?", a: "인도", h: "같은 단어예요." },
+      { q: "사자가 삐치면?", a: "삐사", h: "앞에 삐 붙여요." },
+      { q: "오리를 생으로 먹으면?", a: "회오리", h: "회 + 오리." },
+      { q: "강아지가 혼날 때 듣는 말은?", a: "에라이", h: "혼낼 때 자주 하는 말." },
+      { q: "강아지가 계단 오르면?", a: "강아지", h: "소리 그대로." },
+      { q: "다섯 그루 나무는?", a: "오목", h: "오(5) + 목." },
+      { q: "잠을 못 자는 죄는?", a: "불면죄", h: "불면증과 비슷해요." },
+      { q: "솔직한 사람이 좋아하는 음료는?", a: "솔의눈", h: "솔직의 솔." },
+      { q: "호주의 돈은?", a: "호주머니", h: "돈 넣는 곳." },
+      { q: "두려운 도시는?", a: "무서운대", h: "도시 이름처럼." },
+      { q: "새우의 반대말은?", a: "고우", h: "새로움의 반대." },
+      { q: "왕이 버스에서 내리면?", a: "신내림", h: "내린다는 말이 힌트." },
+      { q: "우유가 넘어지면?", a: "아야", h: "넘어질 때 나는 말." },
+      { q: "달리기에서 꼴찌하면?", a: "다음", h: "순서를 바꿔 생각해요." },
+      { q: "다리미가 좋아하는 음식은?", a: "피자", h: "펴는 소리." },
+      { q: "해적이 가장 싫어하는 과목은?", a: "수학", h: "나눗셈이 많아요." },
+      { q: "세상에서 제일 빠른 닭은?", a: "후다닥", h: "빨리 달리는 소리." },
+      { q: "세상에서 가장 야한 닭은?", a: "홀딱", h: "옷을 벗은 느낌의 말." },
+      { q: "공이 화나면?", a: "풋볼", h: "발로 차요." },
+      { q: "원숭이가 가는 학교는?", a: "몽키스쿨", h: "원숭이 영어가 힌트." },
+      { q: "세상에서 가장 억울한 도형은?", a: "원통", h: "억울하면 하는 말과 비슷." },
+      { q: "빵이 목마르면?", a: "빵터짐", h: "웃음 표현과 비슷." },
+      { q: "개가 사람을 가르치면?", a: "개인교습", h: "개 + 인." },
+      { q: "호랑이가 차를 타면?", a: "타이거", h: "영어 발음 장난." },
+      { q: "세상에서 제일 긴 이름은?", a: "김수한무", h: "옛날 개그 단골." },
+      { q: "눈이 녹으면 뭐가 될까?", a: "봄", h: "따뜻한 계절." },
+      { q: "돌잔치에서 제일 바쁜 사람은?", a: "돌잡이", h: "돌 + 잡이." },
+      { q: "세상에서 제일 착한 사자는?", a: "봉사자", h: "사자 소리가 들어가요." },
+      { q: "세상에서 가장 얌전한 물은?", a: "정수", h: "깨끗하고 조용해요." },
+      { q: "펭귄이 다니는 중학교는?", a: "냉방중", h: "차가운 느낌." },
+      { q: "개미가 모이면?", a: "개미팅", h: "meeting 소리." },
+      { q: "곰이 다니는 목욕탕은?", a: "곰탕", h: "국 이름." },
+      { q: "치약이 학교 가면?", a: "반짝이", h: "이가 반짝." },
+      { q: "고양이가 좋아하는 차는?", a: "캣차", h: "cat 소리." },
+      { q: "토끼가 제일 좋아하는 나라는?", a: "당근나라", h: "토끼 간식." },
+      { q: "바다가 화나면?", a: "파도친다", h: "철썩철썩." },
+      { q: "세상에서 가장 시원한 개는?", a: "아이스개", h: "차가운 느낌." },
+      { q: "감자가 길을 잃으면?", a: "헤매이토", h: "포테이토 비슷." },
+      { q: "귤이 놀라면?", a: "깜귤", h: "깜짝의 깜." },
+      { q: "딸기가 회사에 가면?", a: "딸기과장", h: "직급이 붙어요." },
+      { q: "라면이 화나면?", a: "불라면", h: "매운 라면처럼." },
+      { q: "햄버거가 노래하면?", a: "버거송", h: "song 소리." },
+      { q: "우산이 졸리면?", a: "꾸벅", h: "고개 숙이는 소리." },
+      { q: "연필이 화나면?", a: "심술", h: "연필 안쪽에 있어요." },
+      { q: "지우개가 제일 좋아하는 말은?", a: "지워줘", h: "이름 그대로." },
+      { q: "시계가 배고프면?", a: "시계빵", h: "빵 먹고 똑딱." },
+      { q: "거울이 웃으면?", a: "반사웃음", h: "따라 웃어요." },
+      { q: "달팽이가 뛰면?", a: "안달팽", h: "느린 친구가 급해졌어요." },
+      { q: "악어가 자주 가는 은행은?", a: "이자카야", h: "이자 소리가 힌트." },
+      { q: "원숭이가 화장하면?", a: "몽키업", h: "makeup 발음 장난." },
+      { q: "수박이 바다에 가면?", a: "워터멜론", h: "원래 영어 이름." },
+      { q: "아이가 가장 좋아하는 산은?", a: "장난", h: "맨날 치는 것." },
+      { q: "비가 제일 좋아하는 음악은?", a: "빗소리", h: "톡톡 떨어지는 소리." },
+      { q: "눈사람의 여름 계획은?", a: "휴식", h: "더우면 녹아요." },
+      { q: "비행기가 배고프면?", a: "에어밥", h: "air + 밥." },
+      { q: "도토리가 잠들면?", a: "도토리묵", h: "음식 이름." },
+      { q: "김밥이 추우면?", a: "김밥말이", h: "몸을 말아요." },
+      { q: "구름이 넘어지면?", a: "구른다", h: "구름 + 구르다." },
+      { q: "가위가 놀라면?", a: "깍", h: "자를 때 소리." },
+      { q: "볼펜이 피곤하면?", a: "잉크절", h: "잉크가 모자라요." },
+      { q: "피자가 달리면?", a: "피자헛둘", h: "하나 둘 리듬." },
+      { q: "빨대가 화나면?", a: "쭉빵", h: "쭉 빠는 느낌." },
+      { q: "사과가 웃으면?", a: "풋사과", h: "풋 하고 웃어요." },
+      { q: "귤이 웃으면?", a: "귤귤", h: "굴러가는 소리." },
+      { q: "토마토가 피곤하면?", a: "토마잠", h: "잠이 와요." },
+      { q: "감이 추우면?", a: "홍시버", h: "홍시 + shiver." },
+      { q: "딸기가 운동하면?", a: "딸기력", h: "체력처럼." },
+      { q: "수건이 춤추면?", a: "타월댄스", h: "dance 소리." },
+      { q: "치킨이 화장실 가면?", a: "닭실", h: "교실 비슷한 말장난." },
+      { q: "떡이 길을 건너면?", a: "떡보행", h: "보행자처럼." },
+      { q: "초코가 노래하면?", a: "초코송이", h: "과자 이름도 같아요." },
+      { q: "멜론이 크게 웃으면?", a: "멜롱", h: "메롱 소리와 비슷." },
+      { q: "빵이 시험 보면?", a: "빵점", h: "점수가 0점." },
+      { q: "젤리가 놀라면?", a: "젤리깜짝", h: "말 그대로." },
+      { q: "우유가 춤추면?", a: "밀크쉐이크", h: "흔드는 음료." },
+      { q: "밥이 춤추면?", a: "비빔", h: "섞는 동작." },
+      { q: "라디오가 넘어지면?", a: "넘어디오", h: "소리 장난." },
+      { q: "컵이 달리면?", a: "컵차기", h: "차처럼 달려요." },
+      { q: "도넛이 울면?", a: "도넛도넛", h: "donut 소리 반복." },
+      { q: "아이가 제일 좋아하는 바다는?", a: "놀이바다", h: "놀이동산 느낌." },
+      { q: "펜이 잠들면?", a: "펜잠", h: "그대로 읽어봐요." },
+      { q: "마지막! 웃음을 3번 말하면?", a: "하하하", h: "그냥 크게 웃어요." }
+    ].slice(0, 100);
+
+    const questionEl = document.getElementById("question");
+    const hintEl = document.getElementById("hint");
+    const answerEl = document.getElementById("answer");
+    const progressEl = document.getElementById("progress");
+    const totalEl = document.getElementById("total");
+    const seenEl = document.getElementById("seen");
+    const hintBtn = document.getElementById("hintBtn");
+    const answerBtn = document.getElementById("answerBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    let order = [];
+    let index = 0;
+    let hintStep = 0;
+    let answerSeen = 0;
+    let answerOpened = false;
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function getChoseong(text) {
+      const choseong = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+      return Array.from(text).map((char) => {
+        const code = char.charCodeAt(0);
+        if (code < 0xac00 || code > 0xd7a3) return char;
+        const idx = Math.floor((code - 0xac00) / 588);
+        return choseong[idx];
+      }).join("");
+    }
+
+    function maskByLength(text) {
+      return Array.from(text).map(() => "○").join(" ");
+    }
+
+    function currentRiddle() {
+      return riddles[order[index]];
+    }
+
+    function updateStats() {
+      progressEl.textContent = String(index + 1);
+      seenEl.textContent = String(answerSeen);
+    }
+
+    function renderQuestion() {
+      const item = currentRiddle();
+      questionEl.textContent = item.q;
+      hintEl.textContent = `글자수 힌트: ${maskByLength(item.a)}`;
+      answerEl.textContent = "";
+      hintStep = 0;
+      answerOpened = false;
+      updateStats();
+    }
+
+    function showHint() {
+      const item = currentRiddle();
+      const chosungHint = getChoseong(item.a);
+      hintStep += 1;
+
+      if (hintStep === 1) {
+        hintEl.textContent = `추가 힌트: ${item.h}`;
+        return;
+      }
+      hintEl.textContent = `초성 힌트: ${chosungHint}`;
+    }
+
+    function showAnswer() {
+      if (!answerOpened) {
+        answerSeen += 1;
+        answerOpened = true;
+      }
+      answerEl.textContent = `정답: ${currentRiddle().a}`;
+      updateStats();
+    }
+
+    function nextQuestion() {
+      index += 1;
+      if (index >= riddles.length) {
+        order = shuffle([...Array(riddles.length).keys()]);
+        index = 0;
+      }
+      renderQuestion();
+    }
+
+    hintBtn.addEventListener("click", showHint);
+    answerBtn.addEventListener("click", showAnswer);
+    nextBtn.addEventListener("click", nextQuestion);
+
+    function init() {
+      order = shuffle([...Array(riddles.length).keys()]);
+      index = 0;
+      hintStep = 0;
+      answerSeen = 0;
+      answerOpened = false;
+      totalEl.textContent = String(riddles.length);
+      renderQuestion();
+    }
+
+    init();
+  </script>
+</body>
+</html>

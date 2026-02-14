@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" role="img" aria-label="수수께끼 게임 썸네일">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff0d6"/>
+      <stop offset="100%" stop-color="#dff4ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#g1)"/>
+  <circle cx="140" cy="90" r="52" fill="#ffcf87" opacity="0.9"/>
+  <circle cx="700" cy="355" r="78" fill="#a6ddff" opacity="0.9"/>
+  <rect x="120" y="112" width="560" height="226" rx="26" fill="#fff" stroke="#f2d6ad" stroke-width="4"/>
+  <text x="400" y="196" text-anchor="middle" font-family="Malgun Gothic, sans-serif" font-size="62" font-weight="700" fill="#f08a3e">수수께끼</text>
+  <text x="400" y="257" text-anchor="middle" font-family="Malgun Gothic, sans-serif" font-size="44" font-weight="700" fill="#328ca0">게임</text>
+  <text x="400" y="308" text-anchor="middle" font-family="Malgun Gothic, sans-serif" font-size="24" fill="#58636d">힌트 보고 정답 맞히기</text>
+</svg>
