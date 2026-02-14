@@ -67,37 +67,6 @@
       display: grid;
       gap: 12px;
     }
-    .feedback-box {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      z-index: 2;
-    }
-    .feedback-btn {
-      border: 1px solid #d8e3ed;
-      border-radius: 999px;
-      background: #fff;
-      color: #39424a;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 4px 8px;
-      line-height: 1;
-      cursor: pointer;
-    }
-    .feedback-btn.active {
-      border-color: #4f8fff;
-      color: #1f5ed9;
-      background: #eef4ff;
-    }
-    .feedback-msg {
-      font-size: 11px;
-      color: #6a7783;
-      min-width: 36px;
-      text-align: right;
-    }
     #question {
       margin: 0;
       text-align: center;
@@ -198,11 +167,6 @@
     </div>
 
     <section class="board">
-      <div class="feedback-box" aria-label="문제 피드백">
-        <button id="likeBtn" class="feedback-btn" type="button" aria-label="좋아요">👍</button>
-        <button id="dislikeBtn" class="feedback-btn" type="button" aria-label="별로예요">👎</button>
-        <span id="feedbackMsg" class="feedback-msg"></span>
-      </div>
       <p id="question"></p>
       <p id="hint">힌트 보기 버튼을 눌러보세요.</p>
       <p id="answer"></p>
@@ -394,11 +358,6 @@
     const answerBtn = document.getElementById("answerBtn");
     const nextBtn = document.getElementById("nextBtn");
     const effectsLayerEl = document.getElementById("effectsLayer");
-    const likeBtn = document.getElementById("likeBtn");
-    const dislikeBtn = document.getElementById("dislikeBtn");
-    const feedbackMsgEl = document.getElementById("feedbackMsg");
-
-    const FEEDBACK_API_URL = window.RIDDLE_FEEDBACK_API_URL || "";
 
     let order = [];
     let index = 0;
@@ -407,8 +366,6 @@
     let answerOpened = false;
     let autoNextTimeoutId = null;
     let autoNextIntervalId = null;
-    const voteState = {};
-    let feedbackMsgTimer = null;
 
     function shuffle(arr) {
       const copy = [...arr];
@@ -435,65 +392,6 @@
 
     function currentRiddle() {
       return normalizedRiddles[order[index]];
-    }
-
-    function getRiddleId(item) {
-      const raw = `${item.q}|${item.a}`;
-      let hash = 2166136261;
-      for (let i = 0; i < raw.length; i += 1) {
-        hash ^= raw.charCodeAt(i);
-        hash = Math.imul(hash, 16777619);
-      }
-      return `r${(hash >>> 0).toString(16)}`;
-    }
-
-    function setFeedbackMessage(text) {
-      clearTimeout(feedbackMsgTimer);
-      feedbackMsgEl.textContent = text;
-      if (!text) return;
-      feedbackMsgTimer = setTimeout(() => {
-        feedbackMsgEl.textContent = "";
-      }, 1200);
-    }
-
-    function refreshFeedbackButtons() {
-      const item = currentRiddle();
-      const riddleId = getRiddleId(item);
-      const vote = voteState[riddleId] || "";
-      likeBtn.classList.toggle("active", vote === "like");
-      dislikeBtn.classList.toggle("active", vote === "dislike");
-      feedbackMsgEl.textContent = "";
-    }
-
-    async function sendFeedback(vote) {
-      const item = currentRiddle();
-      const riddleId = getRiddleId(item);
-      voteState[riddleId] = vote;
-      refreshFeedbackButtons();
-
-      if (!FEEDBACK_API_URL) {
-        setFeedbackMessage("저장됨");
-        return;
-      }
-
-      try {
-        const response = await fetch(FEEDBACK_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            game: "riddle-game",
-            riddleId,
-            question: item.q,
-            answer: item.a,
-            vote,
-            createdAt: new Date().toISOString()
-          })
-        });
-        if (!response.ok) throw new Error("failed");
-        setFeedbackMessage("전송됨");
-      } catch {
-        setFeedbackMessage("실패");
-      }
     }
 
     function updateStats() {
@@ -571,7 +469,6 @@
       nextBtn.hidden = true;
       hintStep = 0;
       answerOpened = false;
-      refreshFeedbackButtons();
       updateStats();
     }
 
@@ -608,8 +505,6 @@
     hintBtn.addEventListener("click", showHint);
     answerBtn.addEventListener("click", showAnswer);
     nextBtn.addEventListener("click", nextQuestion);
-    likeBtn.addEventListener("click", () => sendFeedback("like"));
-    dislikeBtn.addEventListener("click", () => sendFeedback("dislike"));
 
     function init() {
       clearAutoNextCountdown();
