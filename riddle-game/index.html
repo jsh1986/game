@@ -256,6 +256,8 @@
     let hintStep = 0;
     let answerSeen = 0;
     let answerOpened = false;
+    let autoNextTimeoutId = null;
+    let autoNextIntervalId = null;
 
     function shuffle(arr) {
       const copy = [...arr];
@@ -289,8 +291,38 @@
       seenEl.textContent = String(answerSeen);
     }
 
+    function clearAutoNextCountdown() {
+      clearTimeout(autoNextTimeoutId);
+      clearInterval(autoNextIntervalId);
+      autoNextTimeoutId = null;
+      autoNextIntervalId = null;
+      nextBtn.textContent = "다음 문제";
+    }
+
+    function startAutoNextCountdown() {
+      clearAutoNextCountdown();
+      let remain = 5;
+      nextBtn.textContent = `다음 문제 (${remain})`;
+
+      autoNextIntervalId = setInterval(() => {
+        remain -= 1;
+        if (remain <= 0) {
+          clearInterval(autoNextIntervalId);
+          autoNextIntervalId = null;
+          return;
+        }
+        nextBtn.textContent = `다음 문제 (${remain})`;
+      }, 1000);
+
+      autoNextTimeoutId = setTimeout(() => {
+        autoNextTimeoutId = null;
+        nextQuestion();
+      }, 5000);
+    }
+
     function renderQuestion() {
       const item = currentRiddle();
+      clearAutoNextCountdown();
       questionEl.textContent = item.q;
       hintEl.textContent = `글자수 힌트: ${maskByLength(item.a)}`;
       answerEl.textContent = "";
@@ -315,12 +347,14 @@
       if (!answerOpened) {
         answerSeen += 1;
         answerOpened = true;
+        startAutoNextCountdown();
       }
       answerEl.textContent = `정답: ${currentRiddle().a}`;
       updateStats();
     }
 
     function nextQuestion() {
+      clearAutoNextCountdown();
       index += 1;
       if (index >= riddles.length) {
         order = shuffle([...Array(riddles.length).keys()]);
@@ -334,6 +368,7 @@
     nextBtn.addEventListener("click", nextQuestion);
 
     function init() {
+      clearAutoNextCountdown();
       order = shuffle([...Array(riddles.length).keys()]);
       index = 0;
       hintStep = 0;
