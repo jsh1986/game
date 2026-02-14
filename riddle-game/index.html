@@ -85,6 +85,7 @@
     #answer {
       color: #167d49;
       min-height: 40px;
+      font-size: clamp(20px, 3.4vw, 26px);
     }
     .actions {
       display: grid;
@@ -304,7 +305,7 @@
 
     function startAutoNextCountdown() {
       clearAutoNextCountdown();
-      let remain = 3;
+      let remain = 4;
       nextBtn.textContent = `다음 문제 (${remain})`;
 
       autoNextIntervalId = setInterval(() => {
@@ -320,7 +321,7 @@
       autoNextTimeoutId = setTimeout(() => {
         autoNextTimeoutId = null;
         nextQuestion();
-      }, 3000);
+      }, 4000);
     }
 
     function renderQuestion() {
@@ -329,6 +330,8 @@
       questionEl.textContent = item.q;
       hintEl.textContent = `글자수 힌트: ${maskByLength(item.a)}`;
       answerEl.textContent = "";
+      hintBtn.hidden = false;
+      answerBtn.hidden = false;
       nextBtn.hidden = true;
       hintStep = 0;
       answerOpened = false;
@@ -351,6 +354,8 @@
       if (!answerOpened) {
         answerSeen += 1;
         answerOpened = true;
+        hintBtn.hidden = true;
+        answerBtn.hidden = true;
         nextBtn.hidden = false;
         startAutoNextCountdown();
       }
