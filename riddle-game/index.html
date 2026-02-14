@@ -89,7 +89,7 @@
     .actions {
       display: grid;
       gap: 10px;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     button {
       border: 0;
@@ -102,7 +102,10 @@
     }
     #hintBtn { background: linear-gradient(135deg, #40b5c7, #5ed4b6); }
     #answerBtn { background: linear-gradient(135deg, #ff8a3d, #ffb56f); }
-    #nextBtn { background: linear-gradient(135deg, #6a81ff, #90a4ff); }
+    #nextBtn {
+      background: linear-gradient(135deg, #6a81ff, #90a4ff);
+      grid-column: 1 / -1;
+    }
     .sources {
       margin: 6px 0 0;
       font-size: 12px;
@@ -110,7 +113,7 @@
       text-align: center;
     }
     @media (max-width: 640px) {
-      .actions { grid-template-columns: 1fr; }
+      .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
 </head>
@@ -301,7 +304,7 @@
 
     function startAutoNextCountdown() {
       clearAutoNextCountdown();
-      let remain = 5;
+      let remain = 3;
       nextBtn.textContent = `다음 문제 (${remain})`;
 
       autoNextIntervalId = setInterval(() => {
@@ -317,7 +320,7 @@
       autoNextTimeoutId = setTimeout(() => {
         autoNextTimeoutId = null;
         nextQuestion();
-      }, 5000);
+      }, 3000);
     }
 
     function renderQuestion() {
@@ -326,6 +329,7 @@
       questionEl.textContent = item.q;
       hintEl.textContent = `글자수 힌트: ${maskByLength(item.a)}`;
       answerEl.textContent = "";
+      nextBtn.hidden = true;
       hintStep = 0;
       answerOpened = false;
       updateStats();
@@ -347,6 +351,7 @@
       if (!answerOpened) {
         answerSeen += 1;
         answerOpened = true;
+        nextBtn.hidden = false;
         startAutoNextCountdown();
       }
       answerEl.textContent = `정답: ${currentRiddle().a}`;
