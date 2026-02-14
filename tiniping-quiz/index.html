@@ -157,7 +157,7 @@
     }
 
     .action-shake {
-      animation: shake 330ms ease;
+      animation: shake 480ms ease;
     }
 
     .effects-layer {
@@ -193,9 +193,13 @@
 
     @keyframes shake {
       0% { transform: translateX(0); }
-      25% { transform: translateX(-8px); }
-      50% { transform: translateX(8px); }
-      75% { transform: translateX(-6px); }
+      12% { transform: translateX(-10px); }
+      24% { transform: translateX(10px); }
+      36% { transform: translateX(-9px); }
+      48% { transform: translateX(9px); }
+      60% { transform: translateX(-7px); }
+      72% { transform: translateX(7px); }
+      84% { transform: translateX(-4px); }
       100% { transform: translateX(0); }
     }
 
@@ -223,6 +227,7 @@
       <div class="stat">
         <span class="pill">문제: <span id="progress">1</span> / <span id="totalQuestionsTop">10</span></span>
         <span class="pill">점수: <span id="score">0</span></span>
+        <span class="pill">시간: <span id="timer">00:00.0</span></span>
       </div>
     </div>
 
@@ -241,6 +246,7 @@
       <div id="result" class="result">
         <h2>퀴즈 완료</h2>
         <p>최종 점수: <strong id="finalScore">0</strong> / <span id="totalQuestionsFinal">10</span></p>
+        <p>걸린 시간: <strong id="finalTime">00:00.0</strong></p>
         <button id="restart" type="button">다시 하기</button>
       </div>
     </section>
@@ -373,12 +379,21 @@
     const effectsLayerEl = document.getElementById("effectsLayer");
     const restartBtn = document.getElementById("restart");
 
+    const TOTAL_QUESTIONS = 10;
+
+    const timerEl = document.getElementById("timer");
+    const finalTimeEl = document.getElementById("finalTime");
+
     let order = [];
     let currentIndex = 0;
     let score = 0;
     let correctName = "";
     let locked = false;
     let wrongAttempts = 0;
+    let timerId = null;
+    let startTime = 0;
+    let elapsedMs = 0;
+    let timerRunning = false;
 
     function shuffle(arr) {
       const copy = [...arr];
@@ -387,6 +402,44 @@
         [copy[i], copy[j]] = [copy[j], copy[i]];
       }
       return copy;
+    }
+
+    function formatTime(ms) {
+      const totalTenths = Math.floor(ms / 100);
+      const minutes = Math.floor(totalTenths / 600);
+      const seconds = Math.floor((totalTenths % 600) / 10);
+      const tenths = totalTenths % 10;
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths}`;
+    }
+
+    function updateTimer() {
+      const current = timerRunning ? elapsedMs + (Date.now() - startTime) : elapsedMs;
+      timerEl.textContent = formatTime(current);
+    }
+
+    function startTimer() {
+      if (timerRunning) return;
+      timerRunning = true;
+      startTime = Date.now();
+      timerId = setInterval(updateTimer, 100);
+    }
+
+    function stopTimer() {
+      if (!timerRunning) return;
+      elapsedMs += Date.now() - startTime;
+      timerRunning = false;
+      clearInterval(timerId);
+      timerId = null;
+      updateTimer();
+    }
+
+    function resetTimer() {
+      clearInterval(timerId);
+      timerId = null;
+      startTime = 0;
+      elapsedMs = 0;
+      timerRunning = false;
+      updateTimer();
     }
 
     function getWrongName(answer) {
@@ -404,7 +457,7 @@
     }
 
     function updateStats() {
-      progressEl.textContent = String(Math.min(currentIndex + 1, characters.length));
+      progressEl.textContent = String(Math.min(currentIndex + 1, order.length));
       scoreEl.textContent = String(score);
     }
 
@@ -450,12 +503,14 @@
     }
 
     function finishGame() {
+      stopTimer();
       finalScoreEl.textContent = String(score);
+      finalTimeEl.textContent = formatTime(elapsedMs);
       resultEl.classList.add("show");
       choiceA.disabled = true;
       choiceB.disabled = true;
       messageEl.textContent = "끝! 다시 하려면 아래 버튼을 누르세요.";
-      progressEl.textContent = String(characters.length);
+      progressEl.textContent = String(order.length);
     }
 
     function handleChoice(name) {
@@ -474,7 +529,7 @@
         choiceB.disabled = true;
         setTimeout(() => {
           currentIndex += 1;
-          if (currentIndex >= characters.length) {
+          if (currentIndex >= order.length) {
             finishGame();
           } else {
             showQuestion();
@@ -487,7 +542,7 @@
       wrongAttempts += 1;
       imageEl.classList.remove("action-pop");
       imageEl.classList.add("action-shake");
-      setTimeout(() => imageEl.classList.remove("action-shake"), 340);
+      setTimeout(() => imageEl.classList.remove("action-shake"), 500);
 
       if (wrongAttempts < 2) {
         messageEl.textContent = "다시 맞춰보세요! (오답 1/2)";
@@ -502,7 +557,7 @@
       choiceB.disabled = true;
       setTimeout(() => {
         currentIndex += 1;
-        if (currentIndex >= characters.length) {
+        if (currentIndex >= order.length) {
           finishGame();
         } else {
           showQuestion();
@@ -512,13 +567,15 @@
     }
 
     function startGame() {
-      order = shuffle(characters);
+      order = shuffle(characters).slice(0, Math.min(TOTAL_QUESTIONS, characters.length));
       currentIndex = 0;
       score = 0;
       locked = false;
-      totalQuestionsTopEl.textContent = String(characters.length);
-      totalQuestionsFinalEl.textContent = String(characters.length);
+      totalQuestionsTopEl.textContent = String(order.length);
+      totalQuestionsFinalEl.textContent = String(order.length);
       resultEl.classList.remove("show");
+      resetTimer();
+      startTimer();
       showQuestion();
     }
 
