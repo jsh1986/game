@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>&#45908;&#54616;&#44592; &#48736;&#44592;</title>
+  <title>더하기 빼기</title>
   <style>
     :root {
       --bg-a: #fff8ef;
@@ -62,6 +62,11 @@
       font-weight: 700;
     }
 
+    .pill.hot {
+      background: #fff5ea;
+      border-color: #ffc791;
+    }
+
     .pill {
       padding: 7px 10px;
       border-radius: 999px;
@@ -76,6 +81,33 @@
       padding: 16px;
       display: grid;
       gap: 12px;
+    }
+
+    .meters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .meter {
+      display: grid;
+      gap: 4px;
+    }
+
+    .meter label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #6f5f4a;
+    }
+
+    progress {
+      width: 100%;
+      height: 12px;
+      accent-color: var(--sub);
+    }
+
+    #timeBar.low {
+      accent-color: #db4f4f;
     }
 
     #stage {
@@ -138,6 +170,8 @@
     #message.ok { color: var(--ok); }
     #message.bad { color: var(--bad); }
 
+    #message.bonus { color: #ff8a3d; }
+
     .result {
       display: none;
       text-align: center;
@@ -161,23 +195,36 @@
 
     @media (max-width: 620px) {
       .choices { grid-template-columns: 1fr; }
+      .meters { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <main class="app">
     <div class="top">
-      <h1>&#45908;&#54616;&#44592; &#48736;&#44592;</h1>
+      <h1>더하기 빼기</h1>
       <div class="stats">
-        <span class="pill">&#47928;&#51228; <span id="progress">1</span>/10</span>
-        <span class="pill">&#51216;&#49688; <span id="score">0</span></span>
-        <span class="pill">&#53076;&#48372; <span id="combo">0</span></span>
-        <span class="pill">&#48324; <span id="stars">0</span>&#44060;</span>
+        <span class="pill">문제 <span id="progress">1</span>/10</span>
+        <span class="pill hot">점수 <span id="score">0</span></span>
+        <span class="pill">콤보 <span id="combo">0</span></span>
+        <span class="pill">별 <span id="stars">0</span>개</span>
+        <span class="pill">목숨 <span id="lives">3</span></span>
+        <span class="pill">최고점수 <span id="bestScore">0</span></span>
       </div>
     </div>
 
     <section class="board">
       <p id="stage"></p>
+      <div class="meters">
+        <div class="meter">
+          <label for="timeBar">시간 제한</label>
+          <progress id="timeBar" max="8" value="8">8</progress>
+        </div>
+        <div class="meter">
+          <label for="bonusBar">스피드 보너스</label>
+          <progress id="bonusBar" max="100" value="100">100</progress>
+        </div>
+      </div>
       <p id="questionText">2 + 3 = ?</p>
       <p id="visual" class="visual"></p>
       <div class="choices">
@@ -187,10 +234,12 @@
       </div>
       <p id="message"></p>
       <div id="result" class="result">
-        <h2>&#50756;&#47308;!</h2>
-        <p>&#52572;&#51333; &#51216;&#49688;: <strong id="finalScore">0</strong> / 10</p>
-        <p>&#54913;&#46301; &#48324;: <strong id="finalStars">0</strong>&#44060;</p>
-        <button id="restart" type="button">&#45796;&#49884; &#54616;&#44592;</button>
+        <h2>완료!</h2>
+        <p>최종 점수: <strong id="finalScore">0</strong></p>
+        <p>정답 개수: <strong id="finalCorrect">0</strong> / 10</p>
+        <p>획득 별: <strong id="finalStars">0</strong>개</p>
+        <p id="finalComment"></p>
+        <button id="restart" type="button">다시 하기</button>
       </div>
     </section>
   </main>
@@ -201,13 +250,19 @@
     const scoreEl = document.getElementById("score");
     const comboEl = document.getElementById("combo");
     const starsEl = document.getElementById("stars");
+    const livesEl = document.getElementById("lives");
+    const bestScoreEl = document.getElementById("bestScore");
     const stageEl = document.getElementById("stage");
+    const timeBarEl = document.getElementById("timeBar");
+    const bonusBarEl = document.getElementById("bonusBar");
     const questionTextEl = document.getElementById("questionText");
     const visualEl = document.getElementById("visual");
     const messageEl = document.getElementById("message");
     const resultEl = document.getElementById("result");
     const finalScoreEl = document.getElementById("finalScore");
+    const finalCorrectEl = document.getElementById("finalCorrect");
     const finalStarsEl = document.getElementById("finalStars");
+    const finalCommentEl = document.getElementById("finalComment");
     const restartBtn = document.getElementById("restart");
     const choiceButtons = [
       document.getElementById("choiceA"),
@@ -217,10 +272,18 @@
 
     let index = 0;
     let score = 0;
+    let correctCount = 0;
     let combo = 0;
     let stars = 0;
+    let lives = 3;
+    let bestScore = Number(localStorage.getItem("plusminus-best-score") || 0);
     let current = null;
     let locked = false;
+    let nextTimer = null;
+    let questionTimer = null;
+    let timeLeft = 8;
+
+    const QUESTION_SECONDS = 8;
 
     function shuffle(arr) {
       const copy = [...arr];
@@ -311,11 +374,67 @@
       if (kind) messageEl.classList.add(kind);
     }
 
+    function updateTimerUi() {
+      timeBarEl.value = timeLeft;
+      timeBarEl.textContent = String(timeLeft);
+      timeBarEl.max = QUESTION_SECONDS;
+      timeBarEl.classList.toggle("low", timeLeft <= 3);
+
+      const bonus = Math.max(0, Math.round((timeLeft / QUESTION_SECONDS) * 100));
+      bonusBarEl.value = bonus;
+      bonusBarEl.textContent = String(bonus);
+    }
+
+    function clearFlowTimers() {
+      if (nextTimer) {
+        clearTimeout(nextTimer);
+        nextTimer = null;
+      }
+      if (questionTimer) {
+        clearInterval(questionTimer);
+        questionTimer = null;
+      }
+    }
+
+    function startQuestionTimer() {
+      clearInterval(questionTimer);
+      timeLeft = QUESTION_SECONDS;
+      updateTimerUi();
+
+      questionTimer = setInterval(() => {
+        if (locked) return;
+        timeLeft = Math.max(0, timeLeft - 1);
+        updateTimerUi();
+
+        if (timeLeft === 0) {
+          combo = 0;
+          lives = Math.max(0, lives - 1);
+          setMessage("시간초과! 이번 문제는 실패예요.", "bad");
+          updateStats();
+          enableChoices(false);
+          locked = true;
+
+          nextTimer = setTimeout(() => {
+            index += 1;
+            if (index >= TOTAL_QUESTIONS || lives === 0) {
+              finishGame();
+            } else {
+              renderQuestion();
+            }
+            locked = false;
+            nextTimer = null;
+          }, 700);
+        }
+      }, 1000);
+    }
+
     function updateStats() {
       progressEl.textContent = String(Math.min(index + 1, TOTAL_QUESTIONS));
       scoreEl.textContent = String(score);
       comboEl.textContent = String(combo);
       starsEl.textContent = String(stars);
+      livesEl.textContent = String(lives);
+      bestScoreEl.textContent = String(bestScore);
     }
 
     function enableChoices(enabled) {
@@ -335,15 +454,32 @@
       });
       enableChoices(true);
       updateStats();
-      setMessage("\uC815\uB2F5\uC744 \uACE8\uB77C\uBCF4\uC138\uC694!");
+      setMessage("정답을 골라보세요!");
+      startQuestionTimer();
     }
 
     function finishGame() {
+      clearFlowTimers();
       resultEl.classList.add("show");
       finalScoreEl.textContent = String(score);
+      finalCorrectEl.textContent = String(correctCount);
       finalStarsEl.textContent = String(stars);
       enableChoices(false);
-      setMessage("\uB354\uD558\uAE30 \uBE7C\uAE30 \uB05D! \uB2E4\uC2DC \uD574\uB3C4 \uC88B\uC544\uC694.", "ok");
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem("plusminus-best-score", String(bestScore));
+        bestScoreEl.textContent = String(bestScore);
+      }
+
+      if (score >= 160) {
+        finalCommentEl.textContent = "완전 대단해요! 계산 마스터네요.";
+      } else if (score >= 100) {
+        finalCommentEl.textContent = "좋아요! 다음엔 별을 더 모아봐요.";
+      } else {
+        finalCommentEl.textContent = "좋은 출발! 다시 도전하면 더 빠르게 늘어요.";
+      }
+
+      setMessage("더하기 빼기 끝! 다시 도전해서 최고점수를 넘겨보세요.", "ok");
       progressEl.textContent = String(TOTAL_QUESTIONS);
     }
 
@@ -353,40 +489,53 @@
       const correct = String(value) === String(current.answer);
 
       if (correct) {
-        score += 1;
+        correctCount += 1;
         combo += 1;
+        const speedBonus = Math.round((timeLeft / QUESTION_SECONDS) * 6);
+        const comboBonus = combo >= 2 ? combo : 0;
+        score += 10 + speedBonus + comboBonus;
         if (combo > 0 && combo % 3 === 0) {
           stars += 1;
-          setMessage("\uC815\uB2F5! \u0033\uC5F0\uC18D \uC131\uACF5, \uBCC4 \u0031\uAC1C \uD68D\uB4DD!", "ok");
+          setMessage("정답! 3연속 성공, 별 1개 획득!", "bonus");
         } else {
-          setMessage("\uC815\uB2F5! \uC544\uC8FC \uC798\uD588\uC5B4\uC694!", "ok");
+          setMessage(`정답! +${10 + speedBonus + comboBonus}점`, "ok");
         }
       } else {
         combo = 0;
-        setMessage("\uC544\uC26C\uC6CC\uC694. \uC815\uB2F5\uC740 " + String(current.answer) + "\uC785\uB2C8\uB2E4.", "bad");
+        lives = Math.max(0, lives - 1);
+        setMessage("아쉬워요. 정답은 " + String(current.answer) + " 입니다.", "bad");
       }
 
+      clearInterval(questionTimer);
+      questionTimer = null;
       updateStats();
       enableChoices(false);
-      setTimeout(() => {
+      nextTimer = setTimeout(() => {
         index += 1;
-        if (index >= TOTAL_QUESTIONS) {
+        if (index >= TOTAL_QUESTIONS || lives === 0) {
           finishGame();
         } else {
           renderQuestion();
         }
         locked = false;
+        nextTimer = null;
       }, 700);
     }
 
     function startGame() {
+      clearFlowTimers();
       index = 0;
       score = 0;
+      correctCount = 0;
       combo = 0;
       stars = 0;
+      lives = 3;
       current = null;
       locked = false;
       resultEl.classList.remove("show");
+      finalCommentEl.textContent = "";
+      updateTimerUi();
+      updateStats();
       renderQuestion();
     }
 

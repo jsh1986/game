@@ -1,47 +1,779 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>업다운 게임</title>
   <style>
-    body { font-family: sans-serif; display: grid; place-items: center; min-height: 100vh; margin: 0; }
-    .box { text-align: center; padding: 24px; border: 1px solid #ddd; border-radius: 12px; }
-    input, button { padding: 8px 10px; font-size: 16px; }
-    #msg { margin-top: 12px; font-weight: 700; }
+    :root {
+      --bg-0: #f7f6f2;
+      --bg-1: #eef4f2;
+      --panel: #ffffff;
+      --ink: #1b2a23;
+      --muted: #607068;
+      --line: #d7dfdb;
+      --accent: #1f7a5a;
+      --accent-soft: #d7efe6;
+      --danger: #bd3f34;
+      --warn: #bc7a1d;
+      --ok: #126148;
+      --shadow: 0 16px 36px rgba(17, 45, 33, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 50% -20%, #ffffff 0%, transparent 75%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1));
+    }
+
+    .box {
+      width: min(720px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      letter-spacing: 0.2px;
+    }
+
+    .desc {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fafdfa;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .chip strong {
+      color: var(--accent);
+    }
+
+    .chip.hot {
+      border-color: #ffc66d;
+      background: #fff8e8;
+    }
+
+    .chip.hot strong {
+      color: #bd5c11;
+    }
+
+    .attempt {
+      display: grid;
+      gap: 4px;
+      min-width: 180px;
+    }
+
+    .attempt label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    progress {
+      width: 100%;
+      height: 12px;
+    }
+
+    .meter-row {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .meter {
+      display: grid;
+      gap: 4px;
+    }
+
+    .meter label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    #timeBar.low {
+      accent-color: #d6662d;
+    }
+
+    button {
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+
+    button {
+      padding: 10px 12px;
+      background: #f8fbf9;
+      cursor: pointer;
+      transition: transform 0.08s ease, background-color 0.16s ease;
+    }
+
+    button:hover {
+      background: #edf7f2;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid #8ecdb5;
+      outline-offset: 1px;
+    }
+
+    .primary {
+      color: #fff;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .primary:hover {
+      background: #186249;
+    }
+
+    .range-wrap {
+      margin-bottom: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #f9fcfa;
+    }
+
+    .range-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .range-bar {
+      position: relative;
+      height: 14px;
+      border-radius: 999px;
+      background: #ecf2ee;
+      overflow: hidden;
+    }
+
+    .possible {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #92d5bb, #5cb18c);
+      border-radius: 999px;
+      transition: left 0.24s ease, width 0.24s ease;
+    }
+
+    .ticks {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(20, minmax(0, 1fr));
+      gap: 4px;
+    }
+
+    .tick {
+      text-align: center;
+      padding: 4px 0;
+      font-size: 11px;
+      border-radius: 6px;
+      background: #f0f4f1;
+      color: #5c6d65;
+    }
+
+    .tick.out {
+      background: #f3e2df;
+      color: #9c4f46;
+    }
+
+    .tick.last {
+      background: #d9eee4;
+      color: #0d5c44;
+      font-weight: 800;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .num-btn {
+      min-height: 44px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid #cfe1d9;
+      background: #f4faf7;
+    }
+
+    .num-btn.selected {
+      border-color: #1f7a5a;
+      background: var(--accent-soft);
+    }
+
+    .num-btn[disabled] {
+      opacity: 0.42;
+      cursor: not-allowed;
+      background: #f4f4f4;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .replay {
+      min-width: 140px;
+      font-weight: 700;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #msg {
+      margin: 0;
+      font-weight: 800;
+      line-height: 1.4;
+      font-size: 18px;
+      min-height: 26px;
+    }
+
+    #hint {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 20px;
+    }
+
+    #badge {
+      margin: 8px 0 0;
+      min-height: 22px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #5b4330;
+    }
+
+    .danger {
+      color: var(--danger);
+    }
+
+    .warn {
+      color: var(--warn);
+    }
+
+    .ok {
+      color: var(--ok);
+    }
+
+    #confetti {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 30;
+    }
+
+    @media (max-width: 560px) {
+      .box {
+        padding: 16px;
+      }
+
+      .hud {
+        grid-template-columns: 1fr;
+      }
+
+      .keypad {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .ticks {
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+      }
+
+      .meter-row {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="box">
-    <h2>1~20 숫자 맞추기</h2>
-    <p>기회: <span id="left">5</span>번</p>
-    <input id="guess" type="number" min="1" max="20" placeholder="숫자 입력" />
-    <button id="btn">확인</button>
-    <p id="msg">시작!</p>
+    <h2>업다운 게임</h2>
+    <p class="desc">1~20 중 정답을 맞춰보세요. 숫자 버튼을 바로 눌러도 입력됩니다.</p>
+
+    <div class="hud">
+      <div class="chips">
+        <span class="chip">범위 <strong>1~20</strong></span>
+        <span class="chip">남은 기회 <strong id="left">5</strong></span>
+        <span class="chip">가능한 구간 <strong id="rangeText">1~20</strong></span>
+        <span class="chip hot">연승 <strong id="streak">0</strong></span>
+        <span class="chip">점수 <strong id="score">0</strong></span>
+        <span class="chip">최고 <strong id="best">0</strong></span>
+      </div>
+      <div class="attempt">
+        <label for="attemptBar">시도 진행률</label>
+        <progress id="attemptBar" max="5" value="0">0/5</progress>
+      </div>
+    </div>
+
+    <div class="meter-row">
+      <div class="meter">
+        <label for="timeBar">라운드 타이머</label>
+        <progress id="timeBar" max="18" value="18">18</progress>
+      </div>
+      <div class="meter">
+        <label for="luckBar">럭키 보너스(빠르게 맞출수록)</label>
+        <progress id="luckBar" max="100" value="0">0</progress>
+      </div>
+    </div>
+
+    <div class="range-wrap" aria-label="가능한 정답 범위 시각화">
+      <div class="range-header">
+        <span>정답은 현재 <strong id="rangeNow">1~20</strong> 사이</span>
+        <span id="rangePercent">100%</span>
+      </div>
+      <div class="range-bar" aria-hidden="true">
+        <div id="possible" class="possible"></div>
+      </div>
+      <div id="ticks" class="ticks"></div>
+    </div>
+
+    <div id="keypad" class="keypad" aria-label="숫자 선택"></div>
+
+    <p id="msg" role="status" aria-live="polite">시작! 1~20 중 하나를 골라보세요.</p>
+    <p id="hint"></p>
+    <p id="badge"></p>
+    <div class="controls">
+      <button id="replay" class="primary replay hidden" type="button">다시하기</button>
+    </div>
   </div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
 
   <script>
-    const answer = Math.floor(Math.random() * 20) + 1;
-    let left = 5;
+    const MIN = 1;
+    const MAX = 20;
+    const MAX_TRIES = 5;
 
-    document.getElementById('btn').onclick = () => {
-      const v = Number(document.getElementById('guess').value);
-      const msg = document.getElementById('msg');
-      if (v < 1 || v > 20) return msg.textContent = "1~20 입력!";
+    const keypad = document.getElementById('keypad');
+    const replayBtn = document.getElementById('replay');
+    const msg = document.getElementById('msg');
+    const hint = document.getElementById('hint');
+    const leftText = document.getElementById('left');
+    const rangeText = document.getElementById('rangeText');
+    const rangeNow = document.getElementById('rangeNow');
+    const rangePercent = document.getElementById('rangePercent');
+    const possible = document.getElementById('possible');
+    const ticks = document.getElementById('ticks');
+    const attemptBar = document.getElementById('attemptBar');
+    const timeBar = document.getElementById('timeBar');
+    const luckBar = document.getElementById('luckBar');
+    const streakText = document.getElementById('streak');
+    const scoreText = document.getElementById('score');
+    const bestText = document.getElementById('best');
+    const badge = document.getElementById('badge');
+    const confettiCanvas = document.getElementById('confetti');
+    const confettiCtx = confettiCanvas.getContext('2d');
+
+    let answer = 0;
+    let left = MAX_TRIES;
+    let low = MIN;
+    let high = MAX;
+    let finished = false;
+    let lastGuess = null;
+    let confettiFrame = null;
+    let timerId = null;
+    let roundStartedAt = 0;
+    let timerLeft = 18;
+    let streak = 0;
+    let score = 0;
+    let bestScore = Number(localStorage.getItem('updown-best-score') || 0);
+    let bestStreak = Number(localStorage.getItem('updown-best-streak') || 0);
+
+    const ROUND_SECONDS = 18;
+    const themes = [
+      {
+        bg0: '#f7f6f2',
+        bg1: '#eef4f2',
+        accent: '#1f7a5a',
+        accentSoft: '#d7efe6'
+      },
+      {
+        bg0: '#f9f1e8',
+        bg1: '#f7f8ef',
+        accent: '#b85e2b',
+        accentSoft: '#f7dfcf'
+      },
+      {
+        bg0: '#eef2fa',
+        bg1: '#eef8f7',
+        accent: '#346a9a',
+        accentSoft: '#d8e8f5'
+      }
+    ];
+
+    function randomAnswer() {
+      return Math.floor(Math.random() * MAX) + MIN;
+    }
+
+    function setStatus(text, cls = '') {
+      msg.textContent = text;
+      msg.className = cls;
+    }
+
+    function updateHudStats() {
+      streakText.textContent = String(streak);
+      scoreText.textContent = String(score);
+      bestText.textContent = `${bestScore} / ${bestStreak}`;
+    }
+
+    function saveRecords() {
+      localStorage.setItem('updown-best-score', String(bestScore));
+      localStorage.setItem('updown-best-streak', String(bestStreak));
+    }
+
+    function closeHint(diff) {
+      if (diff === 0) return '완벽! 정답입니다.';
+      if (diff <= 2) return '아주 가까워요.';
+      if (diff <= 5) return '점점 접근 중이에요.';
+      return '아직 거리가 있어요.';
+    }
+
+    function renderTicks() {
+      let html = '';
+      for (let n = MIN; n <= MAX; n++) {
+        const classes = ['tick'];
+        if (n < low || n > high) classes.push('out');
+        if (n === lastGuess) classes.push('last');
+        html += `<span class="${classes.join(' ')}">${n}</span>`;
+      }
+      ticks.innerHTML = html;
+    }
+
+    function renderRange() {
+      const span = high - low + 1;
+      const ratio = Math.round((span / (MAX - MIN + 1)) * 100);
+
+      rangeText.textContent = `${low}~${high}`;
+      rangeNow.textContent = `${low}~${high}`;
+      rangePercent.textContent = `${ratio}%`;
+
+      const leftPercent = ((low - MIN) / (MAX - MIN + 1)) * 100;
+      const widthPercent = (span / (MAX - MIN + 1)) * 100;
+      possible.style.left = `${leftPercent}%`;
+      possible.style.width = `${widthPercent}%`;
+
+      renderTicks();
+    }
+
+    function updateAttempts() {
+      const used = MAX_TRIES - left;
+      leftText.textContent = left;
+      attemptBar.value = used;
+      attemptBar.textContent = `${used}/${MAX_TRIES}`;
+    }
+
+    function updateTimerUi() {
+      timeBar.value = timerLeft;
+      timeBar.textContent = `${timerLeft}`;
+      timeBar.classList.toggle('low', timerLeft <= 6);
+
+      const bonus = Math.max(0, Math.min(100, Math.round((timerLeft / ROUND_SECONDS) * 100)));
+      luckBar.value = bonus;
+      luckBar.textContent = `${bonus}`;
+    }
+
+    function stopTimer() {
+      if (!timerId) return;
+      clearInterval(timerId);
+      timerId = null;
+    }
+
+    function endRoundLose(reasonText) {
+      finished = true;
+      streak = 0;
+      setStatus(reasonText, 'danger');
+      hint.textContent = '다시하기로 재도전할 수 있어요.';
+      badge.textContent = '연승이 끊겼습니다. 다음 라운드에서 복구해보세요!';
+      replayBtn.classList.remove('hidden');
+      stopTimer();
+      updateKeypadAvailability();
+      updateHudStats();
+    }
+
+    function endRoundWin(guessed) {
+      const elapsed = Math.max(0, (Date.now() - roundStartedAt) / 1000);
+      const speedBonus = Math.max(0, Math.round((ROUND_SECONDS - elapsed) * 4));
+      const tryBonus = left * 18;
+      const roundScore = 70 + speedBonus + tryBonus;
+
+      score += roundScore;
+      streak += 1;
+      bestScore = Math.max(bestScore, score);
+      bestStreak = Math.max(bestStreak, streak);
+      saveRecords();
+
+      setStatus(`정답! ${guessed}를 맞췄어요. +${roundScore}점`, 'ok');
+      hint.textContent = `속도 보너스 ${speedBonus} + 남은 기회 보너스 ${tryBonus}`;
+
+      if (streak >= 5) {
+        badge.textContent = 'LEGEND 연승! 이 감각 그대로 쭉 가보세요!';
+      } else if (streak >= 3) {
+        badge.textContent = '연승 모드 ON! 집중력이 아주 좋아요.';
+      } else {
+        badge.textContent = '클리어! 다음 판도 같은 감으로 가볼까요?';
+      }
+
+      finished = true;
+      replayBtn.classList.remove('hidden');
+      stopTimer();
+      launchConfetti();
+      renderRange();
+      updateKeypadAvailability();
+      updateHudStats();
+    }
+
+    function startTimer() {
+      stopTimer();
+      timerLeft = ROUND_SECONDS;
+      roundStartedAt = Date.now();
+      updateTimerUi();
+
+      timerId = setInterval(() => {
+        if (finished) {
+          stopTimer();
+          return;
+        }
+
+        timerLeft = Math.max(0, timerLeft - 1);
+        updateTimerUi();
+
+        if (timerLeft === 0) {
+          endRoundLose(`시간초과! 정답은 ${answer}`);
+        }
+      }, 1000);
+    }
+
+    function applyRandomTheme() {
+      const theme = themes[Math.floor(Math.random() * themes.length)];
+      const root = document.documentElement;
+      root.style.setProperty('--bg-0', theme.bg0);
+      root.style.setProperty('--bg-1', theme.bg1);
+      root.style.setProperty('--accent', theme.accent);
+      root.style.setProperty('--accent-soft', theme.accentSoft);
+    }
+
+    function updateKeypadAvailability() {
+      const numberButtons = keypad.querySelectorAll('.num-btn');
+      numberButtons.forEach((button) => {
+        const value = Number(button.dataset.value);
+        button.disabled = finished || value < low || value > high;
+      });
+    }
+
+    function markSelectedButton(value) {
+      const buttons = keypad.querySelectorAll('.num-btn');
+      buttons.forEach((button) => {
+        button.classList.toggle('selected', Number(button.dataset.value) === value);
+      });
+    }
+
+    function resizeConfettiCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      confettiCanvas.width = Math.floor(window.innerWidth * ratio);
+      confettiCanvas.height = Math.floor(window.innerHeight * ratio);
+      confettiCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function launchConfetti() {
+      if (confettiFrame) {
+        cancelAnimationFrame(confettiFrame);
+      }
+
+      resizeConfettiCanvas();
+      const colors = ['#1f7a5a', '#f2c14e', '#e4572e', '#4b7bec', '#f071a6'];
+      const particles = [];
+      const count = 120;
+
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: window.innerWidth / 2,
+          y: window.innerHeight * 0.32,
+          vx: (Math.random() - 0.5) * 11,
+          vy: Math.random() * -9 - 4,
+          gravity: 0.22 + Math.random() * 0.08,
+          size: 4 + Math.random() * 5,
+          color: colors[i % colors.length],
+          alpha: 1,
+          life: 0,
+          maxLife: 80 + Math.random() * 30
+        });
+      }
+
+      const tick = () => {
+        confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        let alive = 0;
+
+        particles.forEach((p) => {
+          p.life += 1;
+          if (p.life >= p.maxLife) return;
+          alive += 1;
+
+          p.vy += p.gravity;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.alpha = 1 - p.life / p.maxLife;
+
+          confettiCtx.globalAlpha = p.alpha;
+          confettiCtx.fillStyle = p.color;
+          confettiCtx.fillRect(p.x, p.y, p.size, p.size * 0.7);
+        });
+
+        confettiCtx.globalAlpha = 1;
+
+        if (alive > 0) {
+          confettiFrame = requestAnimationFrame(tick);
+        } else {
+          confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+          confettiFrame = null;
+        }
+      };
+
+      confettiFrame = requestAnimationFrame(tick);
+    }
+
+    function stopConfetti() {
+      if (!confettiFrame) return;
+      cancelAnimationFrame(confettiFrame);
+      confettiFrame = null;
+      confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    }
+
+    function submitGuess(sourceValue) {
+      if (finished) return;
+
+      const v = Number(sourceValue);
+      if (!Number.isInteger(v) || v < MIN || v > MAX) {
+        setStatus('1~20 사이 숫자를 선택하세요.', 'warn');
+        hint.textContent = '';
+        return;
+      }
 
       left--;
-      document.getElementById('left').textContent = left;
+      lastGuess = v;
+      markSelectedButton(v);
+      updateAttempts();
+
+      const diff = Math.abs(answer - v);
+      hint.textContent = `힌트: ${closeHint(diff)} (정답과 ${diff} 차이)`;
 
       if (v === answer) {
-        msg.textContent = "정답!";
+        endRoundWin(v);
         return;
       }
+
+      if (v < answer) {
+        low = Math.max(low, v + 1);
+        setStatus(`UP - ${v}보다 큽니다.`, 'warn');
+      } else {
+        high = Math.min(high, v - 1);
+        setStatus(`DOWN - ${v}보다 작습니다.`, 'warn');
+      }
+
+      renderRange();
+      updateKeypadAvailability();
+
       if (left === 0) {
-        msg.textContent = `게임오버! 정답은 ${answer}`;
-        return;
+        endRoundLose(`게임오버! 정답은 ${answer}`);
       }
-      msg.textContent = v < answer ? "UP" : "DOWN";
-    };
+    }
+
+    function buildKeypad() {
+      let html = '';
+      for (let n = MIN; n <= MAX; n++) {
+        html += `<button type="button" class="num-btn" data-value="${n}" aria-label="${n} 선택">${n}</button>`;
+      }
+      keypad.innerHTML = html;
+
+      keypad.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLButtonElement)) return;
+        const value = Number(target.dataset.value);
+        if (target.disabled) return;
+        submitGuess(value);
+      });
+    }
+
+    function resetGame() {
+      answer = randomAnswer();
+      left = MAX_TRIES;
+      low = MIN;
+      high = MAX;
+      finished = false;
+      lastGuess = null;
+      badge.textContent = '';
+      timeBar.max = ROUND_SECONDS;
+      stopConfetti();
+
+      setStatus('시작! 1~20 중 하나를 골라보세요.');
+      hint.textContent = '숫자 버튼을 눌러 바로 추측하세요.';
+      replayBtn.classList.add('hidden');
+      markSelectedButton(null);
+      applyRandomTheme();
+      updateAttempts();
+      renderRange();
+      updateKeypadAvailability();
+      updateHudStats();
+      startTimer();
+    }
+
+    replayBtn.addEventListener('click', resetGame);
+    window.addEventListener('resize', resizeConfettiCanvas);
+
+    buildKeypad();
+    resizeConfettiCanvas();
+    resetGame();
   </script>
 </body>
 </html>
