@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>잎새반 친구들 찾기</title>
+  <style>
+    :root {
+      --bg-a: #fff7fc;
+      --bg-b: #edf8ff;
+      --card: #ffffff;
+      --line: #ffd7ea;
+      --text: #2a2a2a;
+      --main: #ff4f9d;
+      --sub: #49b3ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Malgun Gothic", sans-serif;
+      color: var(--text);
+      background: linear-gradient(150deg, var(--bg-a), var(--bg-b));
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: min(820px, 100%);
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid #fff;
+      border-radius: 18px;
+      box-shadow: 0 12px 24px rgba(96, 132, 176, 0.2);
+      padding: 18px;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--main);
+      font-size: clamp(22px, 3vw, 30px);
+    }
+
+    .stat {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fff;
+    }
+
+    .quiz {
+      display: grid;
+      gap: 14px;
+    }
+
+    .image-wrap {
+      width: min(360px, 100%);
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      padding: 8px;
+    }
+
+    .image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .choices {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .choice {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 12px;
+      font-size: clamp(30px, 5vw, 46px);
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      transition: transform 140ms ease, filter 140ms ease;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+    }
+
+    #choiceA {
+      background: linear-gradient(120deg, #ff4f9d, #ff8457);
+    }
+
+    #choiceB {
+      background: linear-gradient(120deg, #49b3ff, #6f82ff);
+    }
+
+    .choice:hover { transform: translateY(-2px); filter: brightness(1.04); }
+
+    .choice:disabled {
+      opacity: 0.65;
+      cursor: default;
+    }
+
+    .message {
+      min-height: 28px;
+      text-align: center;
+      font-weight: 700;
+      color: var(--sub);
+      font-size: clamp(18px, 2.4vw, 26px);
+    }
+
+    .result {
+      text-align: center;
+      display: none;
+      margin-top: 8px;
+    }
+
+    .result.show { display: block; }
+
+    .result-emotion {
+      margin: 12px auto 0;
+      width: min(260px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      padding: 10px;
+      display: none;
+      gap: 8px;
+      justify-items: center;
+    }
+
+    .result-emotion.show { display: grid; }
+
+    .result-emotion img {
+      width: 100%;
+      max-width: 210px;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      display: block;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .result-emotion p {
+      margin: 0;
+      font-weight: 800;
+      color: #44505b;
+    }
+
+    #restart {
+      margin-top: 10px;
+      border: 0;
+      background: #333;
+      color: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .action-pop {
+      animation: pop 260ms ease;
+    }
+
+    .action-shake {
+      animation: shake 480ms ease;
+    }
+
+    .effects-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 999;
+    }
+
+    .firework {
+      --dx: 0px;
+      --dy: -100px;
+      --size: 8px;
+      --dur: 850ms;
+      --hue: 0deg;
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: 0;
+      top: 0;
+      border-radius: 50%;
+      background: hsl(var(--hue), 94%, 60%);
+      box-shadow: 0 0 10px hsl(var(--hue), 94%, 60%);
+      animation: firework-burst var(--dur) ease-out forwards;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      12% { transform: translateX(-10px); }
+      24% { transform: translateX(10px); }
+      36% { transform: translateX(-9px); }
+      48% { transform: translateX(9px); }
+      60% { transform: translateX(-7px); }
+      72% { transform: translateX(7px); }
+      84% { transform: translateX(-4px); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes firework-burst {
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--dx), var(--dy)) scale(0.2);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .choices { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="effectsLayer" class="effects-layer"></div>
+  <main class="app">
+    <div class="top">
+      <h1>잎새반 친구들 찾기</h1>
+      <div class="stat">
+        <span class="pill">문제: <span id="progress">1</span> / <span id="totalQuestionsTop">14</span></span>
+        <span class="pill">점수: <span id="score">0</span></span>
+        <span class="pill">시간: <span id="timer">00:00.0</span></span>
+      </div>
+    </div>
+
+    <section class="quiz">
+      <div class="image-wrap">
+        <img id="characterImage" alt="잎새반 친구 사진" />
+      </div>
+
+      <div class="choices">
+        <button id="choiceA" class="choice" type="button"></button>
+        <button id="choiceB" class="choice" type="button"></button>
+      </div>
+
+      <div id="message" class="message">사진을 보고 친구 이름을 고르세요.</div>
+
+      <div id="result" class="result">
+        <h2>게임 완료</h2>
+        <p>최종 점수: <strong id="finalScore">0</strong> / <span id="totalQuestionsFinal">14</span></p>
+        <p>걸린 시간: <strong id="finalTime">00:00.0</strong></p>
+        <div id="resultEmotion" class="result-emotion">
+          <img id="resultEmotionImage" alt="결과 감정 이미지" />
+          <p id="resultEmotionText"></p>
+        </div>
+        <button id="restart" type="button">다시 하기</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const characters = [
+      { name: "권하연", src: "./assets/images/characters/권하연.png" },
+      { name: "김연서", src: "./assets/images/characters/김연서.png" },
+      { name: "김유준", src: "./assets/images/characters/김유준.png" },
+      { name: "박시아", src: "./assets/images/characters/박시아.png" },
+      { name: "박채연", src: "./assets/images/characters/박채연.png" },
+      { name: "송이한", src: "./assets/images/characters/송이한.png" },
+      { name: "임태빈", src: "./assets/images/characters/임태빈.png" },
+      { name: "정이서", src: "./assets/images/characters/정이서.png" },
+      { name: "정제니", src: "./assets/images/characters/정제니.png" },
+      { name: "정지호", src: "./assets/images/characters/정지호.png" },
+      { name: "조예주", src: "./assets/images/characters/조예주.png" },
+      { name: "조이재", src: "./assets/images/characters/조이재.png" },
+      { name: "최유진", src: "./assets/images/characters/최유진.png" },
+      { name: "허승호", src: "./assets/images/characters/허승호.png" }
+    ];
+
+    const imageEl = document.getElementById("characterImage");
+    const choiceA = document.getElementById("choiceA");
+    const choiceB = document.getElementById("choiceB");
+    const progressEl = document.getElementById("progress");
+    const scoreEl = document.getElementById("score");
+    const messageEl = document.getElementById("message");
+    const resultEl = document.getElementById("result");
+    const finalScoreEl = document.getElementById("finalScore");
+    const resultEmotionEl = document.getElementById("resultEmotion");
+    const resultEmotionImageEl = document.getElementById("resultEmotionImage");
+    const resultEmotionTextEl = document.getElementById("resultEmotionText");
+    const totalQuestionsTopEl = document.getElementById("totalQuestionsTop");
+    const totalQuestionsFinalEl = document.getElementById("totalQuestionsFinal");
+    const effectsLayerEl = document.getElementById("effectsLayer");
+    const restartBtn = document.getElementById("restart");
+
+    const TOTAL_QUESTIONS = 20;
+
+    const timerEl = document.getElementById("timer");
+    const finalTimeEl = document.getElementById("finalTime");
+
+    let order = [];
+    let currentIndex = 0;
+    let score = 0;
+    let correctName = "";
+    let locked = false;
+    let wrongAttempts = 0;
+    let timerId = null;
+    let startTime = 0;
+    let elapsedMs = 0;
+    let timerRunning = false;
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function formatTime(ms) {
+      const totalTenths = Math.floor(ms / 100);
+      const minutes = Math.floor(totalTenths / 600);
+      const seconds = Math.floor((totalTenths % 600) / 10);
+      const tenths = totalTenths % 10;
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths}`;
+    }
+
+    function updateTimer() {
+      const current = timerRunning ? elapsedMs + (Date.now() - startTime) : elapsedMs;
+      timerEl.textContent = formatTime(current);
+    }
+
+    function startTimer() {
+      if (timerRunning) return;
+      timerRunning = true;
+      startTime = Date.now();
+      timerId = setInterval(updateTimer, 100);
+    }
+
+    function stopTimer() {
+      if (!timerRunning) return;
+      elapsedMs += Date.now() - startTime;
+      timerRunning = false;
+      clearInterval(timerId);
+      timerId = null;
+      updateTimer();
+    }
+
+    function resetTimer() {
+      clearInterval(timerId);
+      timerId = null;
+      startTime = 0;
+      elapsedMs = 0;
+      timerRunning = false;
+      updateTimer();
+    }
+
+    function getWrongName(answer) {
+      const others = characters.filter((x) => x.name !== answer);
+      const pick = others[Math.floor(Math.random() * others.length)];
+      return pick.name;
+    }
+
+    function setChoiceButtons(answer, wrong) {
+      const labels = Math.random() < 0.5 ? [answer, wrong] : [wrong, answer];
+      choiceA.textContent = labels[0];
+      choiceB.textContent = labels[1];
+      choiceA.disabled = false;
+      choiceB.disabled = false;
+    }
+
+    function updateStats() {
+      progressEl.textContent = String(Math.min(currentIndex + 1, order.length));
+      scoreEl.textContent = String(score);
+    }
+
+    function launchFireworks() {
+      const bursts = 3;
+      const piecesPerBurst = 20;
+      for (let b = 0; b < bursts; b++) {
+        const originX = Math.random() * window.innerWidth;
+        const originY = window.innerHeight * (0.25 + Math.random() * 0.35);
+        for (let i = 0; i < piecesPerBurst; i++) {
+          const dot = document.createElement("span");
+          dot.className = "firework";
+          const angle = (Math.PI * 2 * i) / piecesPerBurst + (Math.random() * 0.4 - 0.2);
+          const distance = 55 + Math.random() * 130;
+          const dx = Math.cos(angle) * distance;
+          const dy = Math.sin(angle) * distance;
+          const hue = Math.floor(Math.random() * 360);
+          const size = 6 + Math.random() * 6;
+          const duration = 700 + Math.random() * 260;
+          dot.style.left = originX + "px";
+          dot.style.top = originY + "px";
+          dot.style.setProperty("--dx", dx.toFixed(2) + "px");
+          dot.style.setProperty("--dy", dy.toFixed(2) + "px");
+          dot.style.setProperty("--hue", hue + "deg");
+          dot.style.setProperty("--size", size.toFixed(2) + "px");
+          dot.style.setProperty("--dur", duration.toFixed(0) + "ms");
+          effectsLayerEl.appendChild(dot);
+          setTimeout(() => dot.remove(), duration + 80);
+        }
+      }
+    }
+
+    function getEmotionKeyByScore(value, maxScore) {
+      const ratio = maxScore > 0 ? value / maxScore : 0;
+      if (ratio === 1) return "yay";
+      if (ratio >= 0.9) return "love_it";
+      if (ratio >= 0.8) return "wink";
+      if (ratio >= 0.7) return "lol";
+      if (ratio >= 0.6) return "omg";
+      if (ratio >= 0.5) return "hmm";
+      if (ratio >= 0.4) return "tired";
+      if (ratio >= 0.2) return "seriously";
+      return "nooo";
+    }
+
+    function emotionTitle(key) {
+      return key.toUpperCase();
+    }
+
+    function showResultEmotion() {
+      const avatar = Math.random() < 0.5 ? "hani" : "jeni";
+      const emotionKey = getEmotionKeyByScore(score, order.length);
+      const src = `../assets/images/${avatar}/${emotionKey}.png`;
+
+      resultEmotionEl.classList.remove("show");
+      resultEmotionImageEl.onerror = () => {
+        resultEmotionEl.classList.remove("show");
+      };
+      resultEmotionImageEl.onload = () => {
+        resultEmotionTextEl.textContent = `${avatar.toUpperCase()} - ${emotionTitle(emotionKey)}`;
+        resultEmotionEl.classList.add("show");
+      };
+      resultEmotionImageEl.src = src;
+    }
+
+    function showQuestion() {
+      const item = order[currentIndex];
+      correctName = item.name;
+      wrongAttempts = 0;
+      imageEl.src = item.src;
+      imageEl.alt = item.name + " 사진";
+      const wrong = getWrongName(correctName);
+      setChoiceButtons(correctName, wrong);
+      messageEl.textContent = "사진을 보고 친구 이름을 고르세요.";
+      updateStats();
+    }
+
+    function finishGame() {
+      stopTimer();
+      finalScoreEl.textContent = String(score);
+      finalTimeEl.textContent = formatTime(elapsedMs);
+      showResultEmotion();
+      resultEl.classList.add("show");
+      choiceA.disabled = true;
+      choiceB.disabled = true;
+      messageEl.textContent = "끝! 다시 하려면 아래 버튼을 누르세요.";
+      progressEl.textContent = String(order.length);
+    }
+
+    function handleChoice(name) {
+      if (locked) return;
+      locked = true;
+
+      if (name === correctName) {
+        score += 1;
+        messageEl.textContent = "정답! 정말 잘했어요!";
+        imageEl.classList.remove("action-shake");
+        imageEl.classList.add("action-pop");
+        launchFireworks();
+        setTimeout(() => imageEl.classList.remove("action-pop"), 280);
+        scoreEl.textContent = String(score);
+        choiceA.disabled = true;
+        choiceB.disabled = true;
+        setTimeout(() => {
+          currentIndex += 1;
+          if (currentIndex >= order.length) {
+            finishGame();
+          } else {
+            showQuestion();
+          }
+          locked = false;
+        }, 650);
+        return;
+      }
+
+      wrongAttempts += 1;
+      imageEl.classList.remove("action-pop");
+      imageEl.classList.add("action-shake");
+      setTimeout(() => imageEl.classList.remove("action-shake"), 500);
+
+      if (wrongAttempts < 2) {
+        messageEl.textContent = "다시 맞춰보세요! (오답 1/2)";
+        setTimeout(() => {
+          locked = false;
+        }, 220);
+        return;
+      }
+
+      messageEl.textContent = "틀렸어요! 정답은 " + correctName;
+      choiceA.disabled = true;
+      choiceB.disabled = true;
+      setTimeout(() => {
+        currentIndex += 1;
+        if (currentIndex >= order.length) {
+          finishGame();
+        } else {
+          showQuestion();
+        }
+        locked = false;
+      }, 700);
+    }
+
+    function startGame() {
+      order = shuffle(characters).slice(0, Math.min(TOTAL_QUESTIONS, characters.length));
+      currentIndex = 0;
+      score = 0;
+      locked = false;
+      totalQuestionsTopEl.textContent = String(order.length);
+      totalQuestionsFinalEl.textContent = String(order.length);
+      resultEl.classList.remove("show");
+      resultEmotionEl.classList.remove("show");
+      resultEmotionImageEl.removeAttribute("src");
+      resultEmotionTextEl.textContent = "";
+      resetTimer();
+      startTimer();
+      showQuestion();
+    }
+
+    choiceA.addEventListener("click", () => handleChoice(choiceA.textContent));
+    choiceB.addEventListener("click", () => handleChoice(choiceB.textContent));
+    restartBtn.addEventListener("click", startGame);
+
+    startGame();
+  </script>
+</body>
+</html>
