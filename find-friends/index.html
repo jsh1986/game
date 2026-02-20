@@ -327,6 +327,7 @@
 
     let order = [];
     let currentIndex = 0;
+    let currentItem = null;
     let score = 0;
     let correctName = "";
     let locked = false;
@@ -466,6 +467,7 @@
 
     function showQuestion() {
       const item = order[currentIndex];
+      currentItem = item;
       correctName = item.name;
       wrongAttempts = 0;
       imageEl.src = item.src;
@@ -488,6 +490,13 @@
       progressEl.textContent = String(order.length);
     }
 
+    function revealCurrentResultImage() {
+      if (!currentItem) return;
+      const resultSrc = currentItem.src.replace("/characters/", "/result_characters/");
+      imageEl.src = resultSrc;
+      imageEl.alt = currentItem.name + " 결과 사진";
+    }
+
     function handleChoice(name) {
       if (locked) return;
       locked = true;
@@ -498,6 +507,7 @@
         imageEl.classList.remove("action-shake");
         imageEl.classList.add("action-pop");
         launchFireworks();
+        revealCurrentResultImage();
         setTimeout(() => imageEl.classList.remove("action-pop"), 280);
         scoreEl.textContent = String(score);
         choiceA.disabled = true;
@@ -510,7 +520,7 @@
             showQuestion();
           }
           locked = false;
-        }, 650);
+        }, 900);
         return;
       }
 
@@ -528,6 +538,7 @@
       }
 
       messageEl.textContent = "틀렸어요! 정답은 " + correctName;
+      revealCurrentResultImage();
       choiceA.disabled = true;
       choiceB.disabled = true;
       setTimeout(() => {
@@ -538,7 +549,7 @@
           showQuestion();
         }
         locked = false;
-      }, 700);
+      }, 1000);
     }
 
     function startGame() {
