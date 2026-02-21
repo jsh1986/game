@@ -225,19 +225,19 @@
       <div class="left-tools">
         <h1>잎새반 친구 메모리</h1>
         <div class="mode" role="group" aria-label="보드 크기 선택">
-          <button id="mode4" type="button" class="active">4x4</button>
-          <button id="mode3" type="button">3x3</button>
+          <button id="mode3" type="button" class="active">3x3</button>
+          <button id="mode4" type="button">4x4</button>
         </div>
       </div>
 
       <div class="stats">
         <span class="pill">시도 <span id="tries">0</span></span>
-        <span class="pill">성공 <span id="matches">0</span>/<span id="targetPairs">8</span></span>
+        <span class="pill">성공 <span id="matches">0</span>/<span id="targetPairs">4</span></span>
         <span class="pill">시간 <span id="timer">00:00.0</span></span>
       </div>
     </div>
 
-    <section id="grid" class="board mode-4x4" aria-label="카드 보드"></section>
+    <section id="grid" class="board mode-3x3" aria-label="카드 보드"></section>
 
     <div id="result" class="result">완료 | 시도 <span id="finalTries">0</span> | 시간 <span id="finalTime">00:00.0</span></div>
   </main>
@@ -271,8 +271,8 @@
     const mode4Btn = document.getElementById("mode4");
     const mode3Btn = document.getElementById("mode3");
 
-    let boardMode = "4x4";
-    let pairs = 8;
+    let boardMode = "3x3";
+    let pairs = 4;
     let deck = [];
     let openCards = [];
     let lockBoard = false;
